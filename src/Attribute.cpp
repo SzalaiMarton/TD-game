@@ -61,6 +61,14 @@ void SpriteComponent::setPos(const sf::Vector2f& pos) {
 	this->sprite->setPosition(pos);
 }
 
+sf::Vector2f SpriteComponent::getPos() const {
+	return this->sprite->getPosition();
+}
+
+sf::Vector2f SpriteComponent::getBound() const {
+	return this->sprite->getPosition() + this->sprite->getLocalBounds().size;
+}
+
 Attribute::Attribute(const Attribute& original) {
 	this->overrideComponents(original.components);
 }

@@ -11,12 +11,13 @@ public:
 	std::vector<BaseShape*> shapes{};
 	bool isHidden{true};
 	QuadTree* root;
-	Layer();
+
+	Layer(float xPos, float yPos, float xSize, float ySize);
 
 	void showLayer();
 	void hideLayer();
 	bool getIsHidden();
-	BaseShape* addShape(BaseShape* object);
+	BaseShape* addShape(BaseShape* object, bool dontAddToTree = false);
 	void removeShape(BaseShape* object);
 	std::vector<BaseShape*>* getShapes();
 };
@@ -37,4 +38,5 @@ public:
 	static void refreshFrame();
 	static void onResize();
 	static Layer* getLayer(MainLayerName index);
+	static Layer* getCurrentLayer();
 };

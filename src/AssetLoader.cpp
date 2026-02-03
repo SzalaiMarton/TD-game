@@ -16,7 +16,7 @@ void Assets::loadTextures(const std::filesystem::path& path) {
 					auto t = new sf::Texture(element.path());
 					loadedTextures.insert({ element.path().filename().string(), t });
 				}
-				catch (sf::Exception& e) {
+				catch (sf::Exception e) {
 					ERROR("Assets::loadAssets", e.what());
 				}
 			}
@@ -34,7 +34,7 @@ void Assets::loadFonts(const std::filesystem::path& path) {
 				auto t = new sf::Font(element.path());
 				loadedFonts.insert({ element.path().filename().string(), t });
 			}
-			catch (sf::Exception& e) {
+			catch (sf::Exception e) {
 				ERROR("Assets::loadAssets", e.what());
 			}
 		}

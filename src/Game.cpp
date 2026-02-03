@@ -10,7 +10,8 @@ uint16_t Game::currentWaitTime{};
 uint16_t Game::timeWaited{};
 TargetGroup* Game::currentGroup{};
 std::queue<std::pair<uint8_t, TargetType>> Game::waitingTargets{};
-GameState Game::currentState = GameState::MENU;
+GameState Game::currentState = GameState::MAINMENU;
+Layer* Game::currentLayer{};
 
 Game::Game() {
 	this->config = GameConfig();
@@ -25,6 +26,7 @@ void Game::init() {
 	this->initMainMenu();
 	this->initInventory();
 	this->initInGame();
+	Game::currentLayer = Renderer::getLayer(MainLayerName::MAINMENU);
 }
 
 void Game::run() {
@@ -48,15 +50,21 @@ void Game::run() {
 			}
 		}
 
+		//Renderer::getCurrentLayer()->root->draw(Renderer::getCurrentLayer());
+
 		this->update();
 		this->handleDrag();
 		Renderer::refreshFrame();
 	}
 }
 
+void Game::shutdown() {
+	Renderer::getWindow()->close();
+}
+
 void Game::update() {
 	switch (this->currentState) {
-	case GameState::MENU:
+	case GameState::MAINMENU:
 		break;
 	case GameState::INGAME:
 		this->handleInGame();
@@ -67,7 +75,7 @@ void Game::update() {
 void Game::handleClick() {
 	auto prev = Game::clickedShape;
 	auto mP = Renderer::getWindow()->mapPixelToCoords(sf::Mouse::getPosition(*Renderer::getWindow()));
-	Game::clickedShape = Renderer::getLayer(gameStateToLayerName(Game::currentState))->root->getClicked(mP);
+	Game::clickedShape = Renderer::getCurrentLayer()->root->getClicked(mP);
 
 	if (prev && Game::clickedShape != prev && prev->attributes.hasComponent<MIC>()) {
 		prev->attributes.getComponent<MIC>()->onClickLoss();
@@ -83,7 +91,7 @@ void Game::handleDrag() {
 
 	if (!Game::wasHolding && holding) {
 		auto mP = Renderer::getWindow()->mapPixelToCoords(sf::Mouse::getPosition(*Renderer::getWindow()));
-		Game::beingDraggedShape = Renderer::getLayer(gameStateToLayerName(Game::currentState))->root->getClicked(mP);
+		Game::beingDraggedShape = Renderer::getCurrentLayer()->root->getClicked(mP);
 	}
 
 	if ((Game::wasHolding && holding) || (!Game::wasHolding && holding)) {
@@ -92,6 +100,9 @@ void Game::handleDrag() {
 		}
 	}
 	else {
+		if (Game::beingDraggedShape) {
+			Game::beingDraggedShape->updateTree();
+		}
 		Game::beingDraggedShape = nullptr;
 	}
 
@@ -100,7 +111,8 @@ void Game::handleDrag() {
 
 void Game::handleHover() {
 	auto mP = Renderer::getWindow()->mapPixelToCoords(sf::Mouse::getPosition(*Renderer::getWindow()));
-	auto hovered = Renderer::getLayer(gameStateToLayerName(Game::currentState))->root->getClicked(mP);
+	auto hovered = Renderer::getCurrentLayer()->root->getClicked(mP);
+	
 
 	if (Game::beingHoveredShape == hovered) {
 		return;
@@ -124,21 +136,24 @@ void Game::handleInGame() {
 
 	if (Game::timeWaited >= Game::currentWaitTime) {
 		if (Game::currentGroup && Game::currentGroup->targets.size() > 0) {
-			Game::currentGroup->spawnNext();
+			Game::currentGroup->spawnNext(Game::currentLayer);
 			Game::timeWaited = 0;
 		}
 		else {
 			Game::currentGroup = nullptr;
 		}
 	}
-	for (auto& e : Renderer::getLayer(MainLayerName::INGAME)->shapes) {
-		if (dynamic_cast<Target*>(e)) {
-			dynamic_cast<Target*>(e)->onUpdate();
+
+	size_t i{};
+	auto& shapes = Renderer::getLayer(MainLayerName::INGAME)->shapes;
+	while (i < shapes.size()) {
+		if (shapes[i]->onUpdate()) {
+			//shapes = Renderer::getLayer(MainLayerName::INGAME)->shapes;
+			continue;
 		}
-		else if (dynamic_cast<BaseCat*>(e)) {
-			dynamic_cast<BaseCat*>(e)->onUpdate();
-		}
+		i += 1;
 	}
+
 	if (currentGroup) {
 		Game::timeWaited++;
 	}
@@ -148,36 +163,36 @@ void Game::initMainMenu() {
 	auto layer = Renderer::getLayer(MainLayerName::MAINMENU);
 
 	auto obj = dynamic_cast<Button*>(layer->addShape(new Button(400, 20, 200, 100, Assets::getTexture("default_texture.png"), "Play")));
-	obj->addClickHanlder([]() { Renderer::getLayer(MainLayerName::INGAME)->showLayer(); Renderer::getLayer(MainLayerName::MAINMENU)->hideLayer(); Game::currentState = GameState::INGAME; });
+	obj->addClickHanlder([this]() { this->switchLayer(Game::currentState, GameState::INGAME); });
 	obj->attributes.getComponent<MIC>()->disableDrag();
 
 	obj = dynamic_cast<Button*>(layer->addShape(new Button(400, 140, 200, 100, Assets::getTexture("default_texture.png"), "Inventory")));
-	obj->addClickHanlder([]() { Renderer::getLayer(MainLayerName::INVENTORY)->showLayer(); Renderer::getLayer(MainLayerName::MAINMENU)->hideLayer(); });
+	obj->addClickHanlder([this]() { this->switchLayer(Game::currentState, GameState::INVENTORY); });
 	obj->attributes.getComponent<MIC>()->disableDrag();
 
 	obj = dynamic_cast<Button*>(layer->addShape(new Button(400, (float)Renderer::getWindow()->getSize().y - 120, 200, 100, Assets::getTexture("default_texture.png"), "Exit")));
-	obj->addClickHanlder([]() { Renderer::getWindow()->close(); });
+	obj->addClickHanlder([this]() { this->shutdown(); });
 	obj->attributes.getComponent<MIC>()->disableDrag();
 }
 
 void Game::initLayers() {
-	auto layer = new Layer();
+	auto layer = new Layer(0, 0, 1000, 600);
 	layer->showLayer();
 	Renderer::pushLayer(layer, MainLayerName::MAINMENU);
 
-	layer = new Layer();
+	layer = new Layer(0, 0, 1000, 600);
 	Renderer::pushLayer(layer, MainLayerName::PAUSEMENU);
 
-	layer = new Layer();
+	layer = new Layer(0, 0, 1000, 600);
 	Renderer::pushLayer(layer, MainLayerName::INVENTORY);
 
-	layer = new Layer();
+	layer = new Layer(0, 0, 1000, 600);
 	Renderer::pushLayer(layer, MainLayerName::PREGAME);
 
-	layer = new Layer();
+	layer = new Layer(0, 0, 1000, 600);
 	Renderer::pushLayer(layer, MainLayerName::BACKGROUNDSCENE);
 
-	layer = new Layer();
+	layer = new Layer(0, 0, 1000, 600);
 	Renderer::pushLayer(layer, MainLayerName::INGAME);
 }
 
@@ -192,14 +207,30 @@ void Game::initInventory() {
 		layer->addShape(new InvetoryCard(startingX + (gap * idx), startingY, 300.f, (float)Renderer::getWindow()->getSize().y - 200.f, e));
 		idx++;
 	}
+
+	auto backButton = dynamic_cast<Button*>(layer->addShape(new Button(100, 500, 200, 100, Assets::getTexture("default_texture.png"), "Back")));
+	backButton->addClickHanlder([this]() {this->switchLayer(Game::currentState, GameState::MAINMENU); });
+	backButton->attributes.getComponent<MIC>()->disableDrag();
 }
 
 void Game::initInGame() {
 	auto layer = Renderer::getLayer(MainLayerName::INGAME);
 
-	Game::currentMap = dynamic_cast<BaseMap*>(layer->addShape(new BaseMap(0.f, 0.f, Renderer::getWindow()->getSize().x, Renderer::getWindow()->getSize().y , Assets::getTexture("place_holder_map.png"), MapType::PLACEHOLDER)));
+	Game::currentMap = dynamic_cast<BaseMap*>(layer->addShape(new BaseMap(0.f, 0.f, (float)Renderer::getWindow()->getSize().x, (float)Renderer::getWindow()->getSize().y , Assets::getTexture("place_holder_map.png"), MapType::PLACEHOLDER), true));
 	this->queueTarget(20, TargetType::BASIC);
-	layer->addShape(new BlackGreyCat(400, 400, 60, 40));
+	//layer->addShape(new BlackGreyCat(306, 304, 60, 40));
+	layer->addShape(new BlackGreyCat(325, 102, 60, 40));
+
+	auto backButton = dynamic_cast<Button*>(layer->addShape(new Button(100, 500, 200, 100, Assets::getTexture("default_texture.png"), "Back")));
+	backButton->addClickHanlder([this]() {this->switchLayer(Game::currentState, GameState::MAINMENU); });
+	backButton->attributes.getComponent<MIC>()->disableDrag();
+}
+
+void Game::switchLayer(GameState from, GameState to) {
+	Renderer::getLayer(gameStateToLayerName(from))->hideLayer();
+	Game::currentLayer = Renderer::getLayer(gameStateToLayerName(to));
+	Game::currentLayer->showLayer();
+	Game::currentState = to;
 }
 
 void Game::queueTarget(uint8_t amount, TargetType type) {

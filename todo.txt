@@ -1,4 +1,5 @@
-cats + bullets
+
+
 map -> path ratios
 ingame ui
 inventory

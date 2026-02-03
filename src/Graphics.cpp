@@ -24,7 +24,7 @@ sf::RenderWindow* Renderer::getWindow() {
 		try {
 			Renderer::init();
 		}
-		catch (std::exception& e) {
+		catch (std::exception e) {
 			ERROR("Renderer::getWindow", e.what());
 			throw std::exception();
 		}
@@ -61,6 +61,10 @@ void Renderer::refreshFrame() {
 	for (auto& layer : layers) {
 		if (!layer.second->getIsHidden()) {
 			for (auto& s : *layer.second->getShapes()) {
+				/*if (dynamic_cast<Square*>(s)) {
+					s->draw(window);
+					continue;
+				}*/
 				if (s->attributes.hasComponent<SpriteComponent>() && Game::beingDraggedShape != s) {
 					s->draw(window);
 				}
@@ -90,8 +94,12 @@ Layer* Renderer::getLayer(MainLayerName index) {
 	return nullptr;
 }
 
-Layer::Layer() {
-	this->root = new QuadTree(-5000, -5000, Game::config.windowConfig.xSize * 2, Game::config.windowConfig.ySize * 2);
+Layer* Renderer::getCurrentLayer() {
+	return getLayer(gameStateToLayerName(Game::currentState));
+}
+
+Layer::Layer(float xPos, float yPos, float xSize, float ySize) {
+	this->root = new QuadTree(xPos, yPos, (unsigned)xSize, (unsigned)ySize);
 }
 
 void Layer::showLayer() {
@@ -112,11 +120,14 @@ bool Layer::getIsHidden() {
 	return this->isHidden;
 }
 
-BaseShape* Layer::addShape(BaseShape* shape) {
+BaseShape* Layer::addShape(BaseShape* shape, bool dontAddToTree) {
 	if (shape) {
 		this->shapes.push_back(shape);
+		shape->parentLayer = this;
 		shape->isHidden = this->isHidden;
-		this->root->insert(shape);
+		if (!dontAddToTree) {
+			this->root->insert(shape);
+		}
 	}
 	return shape;
 }
@@ -138,4 +149,10 @@ void Layer::removeShape(BaseShape* shape) {
 
 std::vector<BaseShape*>* Layer::getShapes() {
 	return &this->shapes;
+}
+
+void QuadTree::removeShape(BaseShape* shape) {
+	if (shape) {
+		this->elements.erase(shape);
+	}
 }

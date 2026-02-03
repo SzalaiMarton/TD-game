@@ -2,7 +2,7 @@
 
 sf::Font* Button::buttonFont = nullptr;
 sf::Font* InvetoryCard::cardFont = nullptr;
-unsigned QuadTree::smallestSize = 50;
+unsigned QuadTree::smallestSize = 200;
 
 BaseShape::BaseShape(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture) {
 	this->initClass(xPos, yPos, xSize, ySize, texture);
@@ -10,6 +10,20 @@ BaseShape::BaseShape(float xPos, float yPos, float xSize, float ySize, sf::Textu
 
 BaseShape::BaseShape(const sf::Vector2f& pos, const sf::Vector2f& size, sf::Texture* texture) {
 	this->initClass(pos.x, pos.y, size.x, size.y, texture);
+}
+
+BaseShape::~BaseShape() {
+	this->parentLayer->removeShape(this);
+	this->parentLayer = nullptr;
+	this->detachFromEveryTree();
+}
+
+bool BaseShape::isOutOfScreen() {
+	auto pos = this->attributes.getComponent<SpriteComponent>()->getPos();
+	auto bound = this->attributes.getComponent<SpriteComponent>()->getBound();
+	auto screenTopLeft = (sf::Vector2f)Renderer::getWindow()->getPosition();
+	auto screenBotRight = (sf::Vector2f)Renderer::getWindow()->getSize() + screenTopLeft;
+	return (bound.x < screenTopLeft.x || pos.x > screenBotRight.x || bound.y < screenTopLeft.y || pos.y > screenBotRight.y);
 }
 
 void BaseShape::showShape() {
@@ -20,8 +34,15 @@ void BaseShape::hideShape() {
 	this->isHidden = true;
 }
 
-void BaseShape::detachFromTree() {
-	this->treeNode = nullptr;
+void BaseShape::detachFromEveryTree() {
+	for (auto it = this->treeNodes.begin(); it != this->treeNodes.end();) {
+		it = this->detachFromTree(it);
+	}
+}
+
+std::set<QuadTree*>::iterator BaseShape::detachFromTree(std::set<QuadTree*>::iterator it) {
+	(*it)->removeShape(this);
+	return this->treeNodes.erase(it);
 }
 
 void BaseShape::initClass(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture) {
@@ -29,6 +50,18 @@ void BaseShape::initClass(float xPos, float yPos, float xSize, float ySize, sf::
 
 	this->attributes.getComponent<SpriteComponent>()->setPos(xPos, yPos);
 	this->attributes.getComponent<SpriteComponent>()->setSize(xSize, ySize);
+}
+
+void BaseShape::updateTree() {
+	for (auto it = this->treeNodes.begin(); it != this->treeNodes.end();) {
+		if (!(*it)->contains(this->attributes.getComponent<SpriteComponent>()->getPos(), this->attributes.getComponent<SpriteComponent>()->getBound())) {
+			it = this->detachFromTree(it);
+			Renderer::getLayer(gameStateToLayerName(Game::currentState))->root->insert(this);
+		}
+		else {
+			it++;
+		}
+	}
 }
 
 Button::Button(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture, const std::string& text = "")
@@ -65,7 +98,7 @@ void Button::initClass(const std::string& text) {
 		this->text->setOrigin(centerTo(*this->text));
 		this->text->setPosition(centerTo(*this->attributes.getComponent<SpriteComponent>()->sprite));
 	}
-	catch (std::exception& e) {
+	catch (std::exception e) {
 		ERROR("Button::Button", e.what());
 	}
 
@@ -96,141 +129,140 @@ QuadTree::~QuadTree() {
 }
 
 void QuadTree::reinsert(BaseShape* obj = nullptr) {
-	auto holder = this->elements;
-	this->disabled = true;
-	this->elements.clear();
-
-	for (auto& e : holder) {
+	for (auto& e : this->elements) {
 		this->insert(e);
 	}
 	if (obj) {
 		this->insert(obj);
 	}
+	this->elements.clear();
 }
 
 void QuadTree::insert(BaseShape* e) {
 	if (!e) {
 		return;
 	}
-	auto ePos = e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().position;
-	auto eBounds = ePos + e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size;
-	if (this->cap <= this->elements.size() && !this->hasBeenSplit) {
-		if (this->split()) {
-			this->reinsert(e);
+	
+
+	if (!this || !this->contains(e->attributes.getComponent<SpriteComponent>()->getPos(), e->attributes.getComponent<SpriteComponent>()->getBound())) {
+		return;
+	}
+
+	if (!this->hasBeenSplit) {
+		if (this->elements.size() < this->cap) {
+			this->elements.insert(e);
+			e->treeNodes.insert(this);
+			return;
 		}
+		this->split();
 	}
-	else if ((this->hasBeenSplit || this->disabled) && !this->cannotBeSplit) {
-		this->tryChild(ePos, eBounds, e);
-	}
-	else if (!this->disabled) {
-		this->elements.insert(e);
-		e->treeNode = this;
-	}
+
+	this->ne->insert(e);
+	this->nw->insert(e);
+	this->se->insert(e);
+	this->sw->insert(e);
 }
 
 bool QuadTree::containsCaseOverlap(const sf::Vector2f& pos, const sf::Vector2f& bound) const {
-	return ((this->xPos >= pos.x && this->xPos + this->xSize <= bound.x && this->yPos < pos.y && this->yPos + this->ySize >= pos.y)
-		|| (this->yPos >= pos.y && this->yPos + this->ySize <= bound.y && this->xPos < pos.x && this->xPos + this->xSize >= pos.x)
-		|| (this->xPos >= pos.x && this->xPos + this->xSize <= bound.x && this->yPos >= pos.y && this->yPos + this->ySize <= bound.y));
+	float left = xPos;
+	float right = xPos + xSize;
+	float top = yPos;
+	float bottom = yPos + ySize;
+
+	return !(right <= pos.x || left >= bound.x || bottom <= pos.y || top >= bound.y);
 }
 
 bool QuadTree::containsCaseOverlap(float xPos, float yPos, float xBound, float yBound) const {
-	return ((this->xPos > xPos || this->yPos > yPos) && (this->xPos + this->xSize < xBound || this->yPos + this->ySize < yBound));
+	float left = xPos;
+	float right = xPos + xSize;
+	float top = yPos;
+	float bottom = yPos + ySize;
+
+	return !(right <= xPos || left >= xBound || bottom <= yPos || top >= yBound);
 }
 
-bool QuadTree::contains(const sf::Vector2f& pos) const {
+bool QuadTree::containsCaseOnePoint(const sf::Vector2f& pos) const {
 	return ((this->xPos < pos.x && this->yPos < pos.y) && (this->xPos + this->xSize >= pos.x && this->yPos + this->ySize >= pos.y));
 }
 
-bool QuadTree::contains(float xPos, float yPos) const {
+bool QuadTree::containsCaseOnePoint(float xPos, float yPos) const {
 	return ((this->xPos < xPos && this->yPos < yPos) && (this->xPos + this->xSize >= xPos && this->yPos + this->ySize >= yPos));
+}
+
+bool QuadTree::contains(const sf::Vector2f& pos, const sf::Vector2f& bound) const {
+	return this->containsCaseOnePoint(pos) || this->containsCaseOnePoint(bound) || this->containsCaseOverlap(pos, bound);
 }
 
 bool QuadTree::split() {
 	this->hasBeenSplit = true;
-	if (this->xSize <= smallestSize) {
-		this->cannotBeSplit = true;
+	if (this->xSize <= smallestSize || this->ySize <= smallestSize) {
 		return false;
 	}
 
-	if (!this->nw) {
-		this->nw = new QuadTree(this->xPos, this->yPos, this->xSize / 2, this->ySize / 2, cap);
-	}
-	if (!this->ne) {
-		this->ne = new QuadTree(this->xPos + this->xSize / 2, this->yPos, this->xSize / 2, this->ySize / 2, cap);
-	}
-	if (!this->sw) {
-		this->sw = new QuadTree(this->xPos, this->yPos + this->ySize / 2, this->xSize / 2, this->ySize / 2, cap);
-	}
-	if (!this->se) {
-		this->se = new QuadTree(this->xPos + this->xSize / 2, this->yPos + this->ySize / 2, this->xSize / 2, this->ySize / 2, cap);
-	}
+	this->nw = new QuadTree(this->xPos, this->yPos, this->xSize / 2, this->ySize / 2, cap);
+	this->ne = new QuadTree(this->xPos + this->xSize / 2, this->yPos, this->xSize / 2, this->ySize / 2, cap);
+	this->sw = new QuadTree(this->xPos, this->yPos + this->ySize / 2, this->xSize / 2, this->ySize / 2, cap);
+	this->se = new QuadTree(this->xPos + this->xSize / 2, this->yPos + this->ySize / 2, this->xSize / 2, this->ySize / 2, cap);
+
+	this->reinsert();
 
 	return true;
 }
 
-void QuadTree::tryChild(const sf::Vector2f& ePos, const sf::Vector2f& eBounds, BaseShape* e) {
-	if (this->ne->contains(ePos)) {
-		this->ne->insert(e);
-	}
-	if (this->nw->contains(ePos)) {
-		this->nw->insert(e);
-	}
-	if (this->se->contains(ePos)) {
-		this->se->insert(e);
-	}
-	if (this->sw->contains(ePos)) {
-		this->sw->insert(e);
-	}
-
-	if (this->ne->contains(eBounds)) {
-		this->ne->insert(e);
-	}
-	if (this->nw->contains(eBounds)) {
-		this->nw->insert(e);
-	}
-	if (this->se->contains(eBounds)) {
-		this->se->insert(e);
-	}
-	if (this->sw->contains(eBounds)) {
-		this->sw->insert(e);
-	}
-
-	if (this->ne->containsCaseOverlap(ePos, eBounds)) {
-		this->ne->insert(e);
-	}
-	if (this->nw->containsCaseOverlap(ePos, eBounds)) {
-		this->nw->insert(e);
-	}
-	if (this->se->containsCaseOverlap(ePos, eBounds)) {
-		this->se->insert(e);
-	}
-	if (this->sw->containsCaseOverlap(ePos, eBounds)) {
-		this->sw->insert(e);
-	}
-}
-
 BaseShape* QuadTree::getClicked(const sf::Vector2f& mousePos) {
-	if (this->ne && this->ne->contains(mousePos)) {
-		this->ne->getClicked(mousePos);
+	if (this->ne && this->ne->containsCaseOnePoint(mousePos)) {
+		return this->ne->getClicked(mousePos);
 	}
-	else if (this->nw && this->nw->contains(mousePos)) {
-		this->nw->getClicked(mousePos);
+	if (this->nw && this->nw->containsCaseOnePoint(mousePos)) {
+		return this->nw->getClicked(mousePos);
 	}
-	else if (this->sw && this->sw->contains(mousePos)) {
-		this->sw->getClicked(mousePos);
+	if (this->sw && this->sw->containsCaseOnePoint(mousePos)) {
+		return this->sw->getClicked(mousePos);
 	}
-	else if (this->se && this->se->contains(mousePos)) {
-		this->se->getClicked(mousePos);
+	if (this->se && this->se->containsCaseOnePoint(mousePos)) {
+		return this->se->getClicked(mousePos);
 	}
-	else {
-		for (auto& e : this->elements) {
-			if (e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().contains(mousePos) && !e->isHidden && e->attributes.hasComponent<MIC>()) {
-				return e;
-			}
+	for (auto& e : this->elements) {
+		if (e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().contains(mousePos) && !e->isHidden && e->attributes.hasComponent<MIC>()) {
+			return e;
 		}
 	}
 	return nullptr;
+}
+
+QuadTree* QuadTree::getClickedTree(const sf::Vector2f& mousePos) {
+	if (this->ne && this->ne->containsCaseOnePoint(mousePos)) {
+		return this->ne->getClickedTree(mousePos);
+	}
+	if (this->nw && this->nw->containsCaseOnePoint(mousePos)) {
+		return this->nw->getClickedTree(mousePos);
+	}
+	if (this->sw && this->sw->containsCaseOnePoint(mousePos)) {
+		return this->sw->getClickedTree(mousePos);
+	}
+	if (this->se && this->se->containsCaseOnePoint(mousePos)) {
+		return this->se->getClickedTree(mousePos);
+	}
+	return this;
+}
+
+void QuadTree::draw(Layer* layer) {
+	if (!this->s) {
+		this->s = new Square(this->xPos, this->yPos, (float)this->xSize, (float)this->ySize);
+		layer->addShape(this->s, true);
+	}
+	if (this->ne) {
+		this->ne->draw(layer);
+	}
+	if (this->sw) {
+		this->sw->draw(layer);
+	}
+	if (this->nw) {
+		this->nw->draw(layer);
+	}
+	if (this->se) {
+		this->se->draw(layer);
+	}
 }
 
 InvetoryCard::InvetoryCard(float xPos, float yPos, float xSize, float ySize, CatType catType) 
@@ -271,9 +303,23 @@ void InvetoryCard::initClass(CatType catType) {
 
 		this->displayCatDescription = new sf::Text(*InvetoryCard::cardFont);
 	}
-	catch (std::exception& e) {
+	catch (std::exception e) {
 		ERROR("InvetoryCard::InvetoryCard", e.what());
 	}
 
 	this->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ 0.f, this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size.y / 2 });
+}
+
+Square::Square(float xPos, float yPos, float xSize, float ySize) : BaseShape() {
+	this->s = new sf::RectangleShape({ xSize, ySize });
+	this->s->setPosition({xPos, yPos});
+	this->s->setFillColor(sf::Color(0,0,0,0));
+	this->s->setOutlineThickness(5);
+	this->s->setOutlineColor(sf::Color(sf::Color::Red));
+}
+
+void Square::draw(sf::RenderWindow* window) {
+	if (this->s && this->isVisible) {
+		window->draw(*this->s);
+	}
 }

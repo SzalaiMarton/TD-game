@@ -13,6 +13,7 @@ public:
 	BaseMap(const sf::Vector2f& pos, const sf::Vector2f& size, sf::Texture* texture, MapType type);
 
 	void draw(sf::RenderWindow* window) override;
+	bool onUpdate() override { return false; }
 
 	void initClass(MapType type);
 };

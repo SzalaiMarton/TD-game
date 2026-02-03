@@ -21,14 +21,16 @@ public:
 	Target(TargetType type);
 	~Target();
 
-	void onUpdate();
-	void onDeath();
-	void die();
-
-	void retrievePath();
+	bool onUpdate() override;
 	void draw(sf::RenderWindow* window) override;
+
+	void onDeath();
+	bool die();
+
+	void takeDmg(uint16_t dmg);
+	void retrievePath();
 	void move();
-	void spawn();
+	void spawn(Layer* layer);
 };
 
 class TargetGroup {
@@ -37,7 +39,7 @@ public:
 
 	TargetGroup(uint8_t amount, TargetType type);
 
-	void spawnNext();
+	void spawnNext(Layer* layer);
 	std::pair<uint8_t, TargetGroup*> initSpawn();
 };
 

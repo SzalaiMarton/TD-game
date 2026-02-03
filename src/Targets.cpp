@@ -12,26 +12,40 @@ Target::~Target() {
 	delete this->stats;
 }
 
-void Target::onUpdate() {
+bool Target::onUpdate() {
 	if (this->isSpawned) {
 		if (this->stats->health <= 0) {
-			this->die();
+			if (this->die()) {
+				return true;
+			}
 		}
 		this->move();
+		this->updateTree();
 	}
+	return false;
 }
 
 void Target::onDeath() {
 	Renderer::getLayer(MainLayerName::INGAME)->removeShape(this);
+	this->detachFromEveryTree();
 }
 
-void Target::die() {
+bool Target::die() {
 	auto res = createTargetStats(this->stats->childType);
 	if (res) {
 		this->stats = res;
+		return false;
 	}
 	else {
 		this->onDeath();
+		return true;
+	}
+}
+
+void Target::takeDmg(uint16_t dmg) {
+	this->stats->health -= dmg;
+	if (this->stats->health <= 0) {
+		this->die();
 	}
 }
 
@@ -66,11 +80,11 @@ void Target::move() {
 	}
 }
 
-void Target::spawn() {
+void Target::spawn(Layer* layer) {
 	this->isSpawned = true;
 	this->retrievePath();
 	this->attributes.getComponent<SpriteComponent>()->sprite->setPosition({ this->path.front().x, this->path.front().y});
-	Renderer::getLayer(MainLayerName::INGAME)->addShape(this);
+	layer->addShape(this);
 }
 
 TargetStats* createTargetStats(TargetType type) {
@@ -83,7 +97,7 @@ TargetStats* createTargetStats(TargetType type) {
 }
 
 TargetStats* createPlaceHolder() {
-	return new TargetStats(10, 1, { 30.f, 30.f }, TargetType::NONE);
+	return new TargetStats(10, 5, { 30.f, 30.f }, TargetType::NONE);
 }
 
 TargetGroup::TargetGroup(uint8_t amount, TargetType type) {
@@ -92,8 +106,8 @@ TargetGroup::TargetGroup(uint8_t amount, TargetType type) {
 	}
 }
 
-void TargetGroup::spawnNext() {
-	this->targets.back()->spawn();
+void TargetGroup::spawnNext(Layer* layer) {
+	this->targets.back()->spawn(layer);
 	this->targets.pop_back();
 }
 

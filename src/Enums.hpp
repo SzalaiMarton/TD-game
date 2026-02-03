@@ -11,10 +11,12 @@ enum class TargetType {
 };
 
 enum class GameState {
-	MENU,
+	MAINMENU,
 	INGAME,
 	PREGAME,
-	POSTGAME
+	POSTGAME,
+	INVENTORY,
+	NONE
 };
 
 enum class MapType {
@@ -29,7 +31,8 @@ enum class MainLayerName {
 	MAINMENU = 7,
 	SETTINGS = 8,
 	INVENTORY = 9,
-	BACKGROUNDSCENE = 20
+	BACKGROUNDSCENE = 20,
+	NONE = 0
 };
 
 enum class HandlerType {
@@ -66,7 +69,7 @@ constexpr std::string catTypeToString(CatType catType) {
 
 constexpr MainLayerName gameStateToLayerName(GameState state) {
 	switch (state) {
-	case GameState::MENU:
+	case GameState::MAINMENU:
 		return MainLayerName::MAINMENU;
 	case GameState::INGAME:
 		return MainLayerName::INGAME;
@@ -74,5 +77,24 @@ constexpr MainLayerName gameStateToLayerName(GameState state) {
 		return MainLayerName::POSTGAME;
 	case GameState::PREGAME:
 		return MainLayerName::PREGAME;
+	case GameState::INVENTORY:
+		return MainLayerName::INVENTORY;
 	}
+	return MainLayerName::NONE;
+}
+
+constexpr GameState layerNameToGameState(MainLayerName layer) {
+	switch (layer) {
+	case MainLayerName::MAINMENU:
+		return GameState::MAINMENU;
+	case MainLayerName::INGAME:
+		return GameState::INGAME;
+	case MainLayerName::POSTGAME:
+		return GameState::POSTGAME;
+	case MainLayerName::PREGAME:
+		return GameState::PREGAME;
+	case MainLayerName::INVENTORY:
+		return GameState::INVENTORY;
+	}
+	return GameState::NONE;
 }

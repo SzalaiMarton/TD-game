@@ -35,6 +35,7 @@ public:
 	static uint16_t currentWaitTime;
 	static uint16_t timeWaited;
 	static TargetGroup* currentGroup;
+	static Layer* currentLayer;
 	static GameState currentState;
 
 	Game();
@@ -55,6 +56,7 @@ public:
 	void initInventory();
 	void initInGame();
 
+	void switchLayer(GameState from, GameState to);
 	void queueTarget(uint8_t amount, TargetType type);
 	void initGroup();
 };
