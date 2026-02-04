@@ -85,21 +85,22 @@ public:
 	QuadTree* nw{};
 	QuadTree* se{};
 	QuadTree* sw{};
-	bool hasBeenSplit = false; // if the tree had been split
-	uint8_t cap;
+	bool hasBeenSplit = false;
+	//debug
 	Square* s{};
+	std::string name{};
+	//debug
 
-	QuadTree(float x, float y, unsigned xs, unsigned ys, uint8_t c = 10);
+	QuadTree(float x, float y, unsigned xs, unsigned ys, std::string name);
 	~QuadTree();
 
 	void insert(BaseShape* e);
-	void reinsert(BaseShape* e);
+	void split();
 	bool containsCaseOverlap(const sf::Vector2f& pos, const sf::Vector2f& bound) const;
 	bool containsCaseOverlap(float xPos, float yPos, float xBound, float yBound) const;
 	bool containsCaseOnePoint(const sf::Vector2f& pos) const;
 	bool containsCaseOnePoint(float xPos, float yPos) const;
 	bool contains(const sf::Vector2f& pos, const sf::Vector2f& bound) const;
-	bool split();
 	void removeShape(BaseShape* shape);
 
 	BaseShape* getClicked(const sf::Vector2f& mousePos);

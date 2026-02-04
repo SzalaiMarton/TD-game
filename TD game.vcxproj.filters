@@ -80,9 +80,6 @@
     <ClInclude Include="src\Targets.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Designs.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Maps.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

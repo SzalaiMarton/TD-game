@@ -16,11 +16,10 @@ BaseBullet::~BaseBullet() {
 
 bool BaseBullet::onUpdate() {
 	this->move();
-	/*if (this->isOutOfScreen()) {
-		LOG("out of screen");
+	if (this->isOutOfScreen()) {
 		this->~BaseBullet();
-		return;
-	}*/
+		return true;
+	}
 	if (this->checkCollision()) {
 		return true;
 	}
@@ -52,9 +51,9 @@ bool BaseBullet::isColliding(Target* target) {
 	}
 
 	auto pos = this->attributes.getComponent<SpriteComponent>()->getPos();
-	auto bound = this->attributes.getComponent<SpriteComponent>()->getBound();
+	auto bound = this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
 	auto targetPos = target->attributes.getComponent<SpriteComponent>()->getPos();
-	auto targetBound = target->attributes.getComponent<SpriteComponent>()->getBound();
+	auto targetBound = target->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
 
 	return !(pos.x > targetBound.x || pos.y > targetBound.y || bound.x < targetPos.x || bound.y < targetPos.y);
 }
@@ -76,5 +75,5 @@ std::pair<sf::Texture*, BulletStat*> createBullet(BulletType type) {
 }
 
 std::pair<sf::Texture*, BulletStat*> createBasic() {
-	return {Assets::getTexture("default_texture.png"), new BulletStat(10, 5, 2)};
+	return {Assets::getTexture("default_texture.png"), new BulletStat(10, 10, 2)};
 }

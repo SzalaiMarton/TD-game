@@ -50,7 +50,9 @@ void Game::run() {
 			}
 		}
 
+		//debug
 		//Renderer::getCurrentLayer()->root->draw(Renderer::getCurrentLayer());
+		//debug
 
 		this->update();
 		this->handleDrag();
@@ -76,6 +78,11 @@ void Game::handleClick() {
 	auto prev = Game::clickedShape;
 	auto mP = Renderer::getWindow()->mapPixelToCoords(sf::Mouse::getPosition(*Renderer::getWindow()));
 	Game::clickedShape = Renderer::getCurrentLayer()->root->getClicked(mP);
+	
+	//debug
+	//auto ttt = Renderer::getCurrentLayer()->root->getClickedTree(mP);
+	//LOG(ttt << " " << ttt->elements.size());
+	//debug
 
 	if (prev && Game::clickedShape != prev && prev->attributes.hasComponent<MIC>()) {
 		prev->attributes.getComponent<MIC>()->onClickLoss();
@@ -148,7 +155,6 @@ void Game::handleInGame() {
 	auto& shapes = Renderer::getLayer(MainLayerName::INGAME)->shapes;
 	while (i < shapes.size()) {
 		if (shapes[i]->onUpdate()) {
-			//shapes = Renderer::getLayer(MainLayerName::INGAME)->shapes;
 			continue;
 		}
 		i += 1;
@@ -162,37 +168,40 @@ void Game::handleInGame() {
 void Game::initMainMenu() {
 	auto layer = Renderer::getLayer(MainLayerName::MAINMENU);
 
-	auto obj = dynamic_cast<Button*>(layer->addShape(new Button(400, 20, 200, 100, Assets::getTexture("default_texture.png"), "Play")));
+	auto obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, 100, 200, 100, Assets::getTexture("default_texture.png"), "Play")));
 	obj->addClickHanlder([this]() { this->switchLayer(Game::currentState, GameState::INGAME); });
 	obj->attributes.getComponent<MIC>()->disableDrag();
 
-	obj = dynamic_cast<Button*>(layer->addShape(new Button(400, 140, 200, 100, Assets::getTexture("default_texture.png"), "Inventory")));
+	obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, 280, 200, 100, Assets::getTexture("default_texture.png"), "Inventory")));
 	obj->addClickHanlder([this]() { this->switchLayer(Game::currentState, GameState::INVENTORY); });
 	obj->attributes.getComponent<MIC>()->disableDrag();
 
-	obj = dynamic_cast<Button*>(layer->addShape(new Button(400, (float)Renderer::getWindow()->getSize().y - 120, 200, 100, Assets::getTexture("default_texture.png"), "Exit")));
+	obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, (float)Renderer::getWindow()->getSize().y - 120, 200, 100, Assets::getTexture("default_texture.png"), "Exit")));
 	obj->addClickHanlder([this]() { this->shutdown(); });
 	obj->attributes.getComponent<MIC>()->disableDrag();
 }
 
 void Game::initLayers() {
-	auto layer = new Layer(0, 0, 1000, 600);
+	float layerPosX = 0.f, layerPosY = 0.f;
+	auto layerSize = (sf::Vector2f)Renderer::getWindow()->getSize();
+
+	auto layer = new Layer(layerPosX, layerPosY, layerSize.x, layerSize.y);
 	layer->showLayer();
 	Renderer::pushLayer(layer, MainLayerName::MAINMENU);
 
-	layer = new Layer(0, 0, 1000, 600);
+	layer = new Layer(layerPosX, layerPosY, layerSize.x, layerSize.y);
 	Renderer::pushLayer(layer, MainLayerName::PAUSEMENU);
 
-	layer = new Layer(0, 0, 1000, 600);
+	layer = new Layer(layerPosX, layerPosY, layerSize.x, layerSize.y);
 	Renderer::pushLayer(layer, MainLayerName::INVENTORY);
 
-	layer = new Layer(0, 0, 1000, 600);
+	layer = new Layer(layerPosX, layerPosY, layerSize.x, layerSize.y);
 	Renderer::pushLayer(layer, MainLayerName::PREGAME);
 
-	layer = new Layer(0, 0, 1000, 600);
+	layer = new Layer(layerPosX, layerPosY, layerSize.x, layerSize.y);
 	Renderer::pushLayer(layer, MainLayerName::BACKGROUNDSCENE);
 
-	layer = new Layer(0, 0, 1000, 600);
+	layer = new Layer(layerPosX, layerPosY, layerSize.x, layerSize.y);
 	Renderer::pushLayer(layer, MainLayerName::INGAME);
 }
 
@@ -216,7 +225,7 @@ void Game::initInventory() {
 void Game::initInGame() {
 	auto layer = Renderer::getLayer(MainLayerName::INGAME);
 
-	Game::currentMap = dynamic_cast<BaseMap*>(layer->addShape(new BaseMap(0.f, 0.f, (float)Renderer::getWindow()->getSize().x, (float)Renderer::getWindow()->getSize().y , Assets::getTexture("place_holder_map.png"), MapType::PLACEHOLDER), true));
+	Game::currentMap = dynamic_cast<BaseMap*>(layer->addShape(new BaseMap(0.f, 0.f, 1.f, 1.f , Assets::getTexture("place_holder_map.png"), MapType::PLACEHOLDER), true));
 	this->queueTarget(20, TargetType::BASIC);
 	//layer->addShape(new BlackGreyCat(306, 304, 60, 40));
 	layer->addShape(new BlackGreyCat(325, 102, 60, 40));

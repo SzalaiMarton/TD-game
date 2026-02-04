@@ -3,7 +3,7 @@
 enum class MapType;
 
 static std::string mapPathLocation = "res//map_paths//";
-std::queue<sf::Vector2f> parseMapPath(MapType type);
+std::pair<sf::Vector2f, std::queue<sf::Vector2f>> parseMapPath(MapType type);
 
 class BaseMap : public BaseShape {
 public:

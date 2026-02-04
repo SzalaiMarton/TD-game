@@ -54,19 +54,27 @@ void SpriteComponent::setSize(const sf::Vector2f& size) {
 }
 
 void SpriteComponent::setPos(float x, float y) {
+	if (x < 1) {
+		x = Renderer::getWindow()->getSize().x * x;
+	}
+	if (y < 1) {
+		y = Renderer::getWindow()->getSize().y * y;
+	}
 	this->sprite->setPosition({ x, y });
 }
 
-void SpriteComponent::setPos(const sf::Vector2f& pos) {
+void SpriteComponent::setPos(sf::Vector2f pos) {
+	if (pos.x < 1) {
+		pos.x = Renderer::getWindow()->getSize().x * pos.x;
+	}
+	if (pos.y < 1) {
+		pos.y = Renderer::getWindow()->getSize().y * pos.y;
+	}
 	this->sprite->setPosition(pos);
 }
 
 sf::Vector2f SpriteComponent::getPos() const {
 	return this->sprite->getPosition();
-}
-
-sf::Vector2f SpriteComponent::getBound() const {
-	return this->sprite->getPosition() + this->sprite->getLocalBounds().size;
 }
 
 Attribute::Attribute(const Attribute& original) {

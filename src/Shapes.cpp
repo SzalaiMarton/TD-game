@@ -20,9 +20,10 @@ BaseShape::~BaseShape() {
 
 bool BaseShape::isOutOfScreen() {
 	auto pos = this->attributes.getComponent<SpriteComponent>()->getPos();
-	auto bound = this->attributes.getComponent<SpriteComponent>()->getBound();
-	auto screenTopLeft = (sf::Vector2f)Renderer::getWindow()->getPosition();
-	auto screenBotRight = (sf::Vector2f)Renderer::getWindow()->getSize() + screenTopLeft;
+	auto bound = this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
+	sf::Vector2f screenTopLeft = { 0.f, 0.f };
+	auto screenBotRight = (sf::Vector2f)Renderer::getWindow()->getSize();
+
 	return (bound.x < screenTopLeft.x || pos.x > screenBotRight.x || bound.y < screenTopLeft.y || pos.y > screenBotRight.y);
 }
 
@@ -48,13 +49,14 @@ std::set<QuadTree*>::iterator BaseShape::detachFromTree(std::set<QuadTree*>::ite
 void BaseShape::initClass(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture) {
 	this->attributes = *(AttributeBuilder().withTexture(texture).build());
 
+	auto bound = this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
 	this->attributes.getComponent<SpriteComponent>()->setPos(xPos, yPos);
 	this->attributes.getComponent<SpriteComponent>()->setSize(xSize, ySize);
 }
 
 void BaseShape::updateTree() {
 	for (auto it = this->treeNodes.begin(); it != this->treeNodes.end();) {
-		if (!(*it)->contains(this->attributes.getComponent<SpriteComponent>()->getPos(), this->attributes.getComponent<SpriteComponent>()->getBound())) {
+		if (!(*it)->contains(this->attributes.getComponent<SpriteComponent>()->getPos(), this->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size)) {
 			it = this->detachFromTree(it);
 			Renderer::getLayer(gameStateToLayerName(Game::currentState))->root->insert(this);
 		}
@@ -91,12 +93,17 @@ void Button::initClass(const std::string& text) {
 		buttonFont = Assets::getFont("ManlineSlabs_t.ttf");
 	}
 
+	auto bound =this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
+	this->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ bound.x / 2, bound.y / 2 });
 	try {
 		this->text = new sf::Text(*buttonFont);
 		this->text->setString(text);
 
-		this->text->setOrigin(centerTo(*this->text));
-		this->text->setPosition(centerTo(*this->attributes.getComponent<SpriteComponent>()->sprite));
+		auto boundText = this->text->getLocalBounds().size;
+		auto boundParent = this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
+		auto posParent = this->attributes.getComponent<SpriteComponent>()->getPos();
+		this->text->setOrigin({ boundText.x / 2, boundText.y / 2 });
+		this->text->setPosition({ posParent.x - 10 + boundParent.x / 2, posParent.y - 10 + boundParent.y / 2 });
 	}
 	catch (std::exception e) {
 		ERROR("Button::Button", e.what());
@@ -114,7 +121,9 @@ void Shape::draw(sf::RenderWindow* window) {
 	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
 }
 
-QuadTree::QuadTree(float x, float y, unsigned xs, unsigned ys, uint8_t c) : xPos(x), yPos(y), xSize(xs), ySize(ys), cap(c) {}
+QuadTree::QuadTree(float x, float y, unsigned xs, unsigned ys, std::string name) : xPos(x), yPos(y), xSize(xs), ySize(ys), name(name) {
+	this->split();
+}
 
 QuadTree::~QuadTree() {
 	this->elements.clear();
@@ -128,33 +137,14 @@ QuadTree::~QuadTree() {
 	this->nw = nullptr;
 }
 
-void QuadTree::reinsert(BaseShape* obj = nullptr) {
-	for (auto& e : this->elements) {
-		this->insert(e);
-	}
-	if (obj) {
-		this->insert(obj);
-	}
-	this->elements.clear();
-}
-
 void QuadTree::insert(BaseShape* e) {
-	if (!e) {
+	if (!e || !this || !this->contains(e->attributes.getComponent<SpriteComponent>()->getPos(), e->attributes.getComponent<SpriteComponent>()->getPos() + e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size)) {
 		return;
 	}
 	
-
-	if (!this || !this->contains(e->attributes.getComponent<SpriteComponent>()->getPos(), e->attributes.getComponent<SpriteComponent>()->getBound())) {
-		return;
-	}
-
 	if (!this->hasBeenSplit) {
-		if (this->elements.size() < this->cap) {
-			this->elements.insert(e);
-			e->treeNodes.insert(this);
-			return;
-		}
-		this->split();
+		this->elements.insert(e);
+		e->treeNodes.insert(this);
 	}
 
 	this->ne->insert(e);
@@ -178,7 +168,7 @@ bool QuadTree::containsCaseOverlap(float xPos, float yPos, float xBound, float y
 	float top = yPos;
 	float bottom = yPos + ySize;
 
-	return !(right <= xPos || left >= xBound || bottom <= yPos || top >= yBound);
+	return !(right < xPos || left > xBound || bottom < yPos || top > yBound);
 }
 
 bool QuadTree::containsCaseOnePoint(const sf::Vector2f& pos) const {
@@ -193,20 +183,16 @@ bool QuadTree::contains(const sf::Vector2f& pos, const sf::Vector2f& bound) cons
 	return this->containsCaseOnePoint(pos) || this->containsCaseOnePoint(bound) || this->containsCaseOverlap(pos, bound);
 }
 
-bool QuadTree::split() {
-	this->hasBeenSplit = true;
+void QuadTree::split() {
 	if (this->xSize <= smallestSize || this->ySize <= smallestSize) {
-		return false;
+		return;
 	}
 
-	this->nw = new QuadTree(this->xPos, this->yPos, this->xSize / 2, this->ySize / 2, cap);
-	this->ne = new QuadTree(this->xPos + this->xSize / 2, this->yPos, this->xSize / 2, this->ySize / 2, cap);
-	this->sw = new QuadTree(this->xPos, this->yPos + this->ySize / 2, this->xSize / 2, this->ySize / 2, cap);
-	this->se = new QuadTree(this->xPos + this->xSize / 2, this->yPos + this->ySize / 2, this->xSize / 2, this->ySize / 2, cap);
-
-	this->reinsert();
-
-	return true;
+	this->hasBeenSplit = true;
+	this->nw = new QuadTree(this->xPos, this->yPos, this->xSize / 2, this->ySize / 2, name + "nw");
+	this->ne = new QuadTree(this->xPos + this->xSize / 2, this->yPos, this->xSize / 2, this->ySize / 2, name + "ne");
+	this->sw = new QuadTree(this->xPos, this->yPos + this->ySize / 2, this->xSize / 2, this->ySize / 2, name + "sw");
+	this->se = new QuadTree(this->xPos + this->xSize / 2, this->yPos + this->ySize / 2, this->xSize / 2, this->ySize / 2, name + "se");
 }
 
 BaseShape* QuadTree::getClicked(const sf::Vector2f& mousePos) {
@@ -289,18 +275,19 @@ void InvetoryCard::draw(sf::RenderWindow* window) {
 }
 
 void InvetoryCard::initClass(CatType catType) {
-	auto dC = Assets::getTexture(catTypeToString(catType));
+	auto dC = Assets::getTexture(catTypeToString(catType) + ".png");
 	this->displayCat = dC ? new sf::Sprite(*dC) : nullptr;
 
 	try {
 		auto cardSprite = this->attributes.getComponent<SpriteComponent>()->sprite;
-
+		
 		InvetoryCard::cardFont = Assets::getFont("ManlineSlabs_t.ttf");
 		this->displayCatName = new sf::Text(*InvetoryCard::cardFont);
 		this->displayCatName->setString(catTypeToString(catType));
-		this->displayCatName->setOrigin(centerTo(*this->displayCatName));
+		
+		auto bound = this->displayCatName->getLocalBounds().size;
+		this->displayCatName->setOrigin({ bound.x / 2, bound.y / 2 });
 		this->displayCatName->setPosition({ cardSprite->getLocalBounds().size.x / 3, cardSprite->getLocalBounds().size.y / 4 + 12 });
-
 		this->displayCatDescription = new sf::Text(*InvetoryCard::cardFont);
 	}
 	catch (std::exception e) {

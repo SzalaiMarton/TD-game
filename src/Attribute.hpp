@@ -61,9 +61,8 @@ struct SpriteComponent : public ObjectComponent {
 	void setSize(float x, float y);
 	void setSize(const sf::Vector2f& size);
 	void setPos(float x, float y);
-	void setPos(const sf::Vector2f& pos);
+	void setPos(sf::Vector2f pos);
 	sf::Vector2f getPos() const;
-	sf::Vector2f getBound() const;
 };
 
 

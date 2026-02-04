@@ -13,25 +13,31 @@ void BaseMap::draw(sf::RenderWindow* window) {
 }
 
 void BaseMap::initClass(MapType type) {
-	this->path = parseMapPath(type);
+	auto package = parseMapPath(type);
+	this->attributes.getComponent<SpriteComponent>()->setSize(package.first);
+	this->path = package.second;
 }
 
-std::queue<sf::Vector2f> parseMapPath(MapType type) {
+std::pair<sf::Vector2f, std::queue<sf::Vector2f>> parseMapPath(MapType type) {
 	std::ifstream file(mapPathLocation + mapTypeToFileName(type));
 
 	if (!file.is_open()) {
 		ERROR("parseMapPath", "Could not open file.");
-		return {};
+		return { { 0.f,0.f },{} };
 	}
 
 	std::queue<sf::Vector2f> res{};
 	std::string line;
+
+	std::getline(file, line);
+	auto spaceIdx = line.find(" ", 1);
+	sf::Vector2f originalSize = { (float)std::stoi(line.substr(0, spaceIdx)) , (float)std::stoi(line.substr(spaceIdx, line.size() - spaceIdx)) };
+
 	while (std::getline(file, line)) {
-		auto spaceIdx = line.find(" ", 1);
+		spaceIdx = line.find(" ", 1);
 		float x = (float)std::stoi(line.substr(0, spaceIdx));
 		float y = (float)std::stoi(line.substr(spaceIdx, line.size() - spaceIdx));
 		res.push({ x, y });
-
 	}
-	return res;
+	return { originalSize, res };
 }

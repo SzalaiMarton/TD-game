@@ -10,7 +10,7 @@ BlackGreyCat::BlackGreyCat(float xPos, float yPos, float xSize, float ySize) : B
 }
 
 void BlackGreyCat::initClass() {
-	this->stats.firerate = 300;
+	this->stats.firerate = 500;
 	this->stats.range = 150;
 	this->stats.cost = 400;
 	this->cooldown = this->stats.firerate;
@@ -36,7 +36,7 @@ bool BlackGreyCat::onUpdate() {
 			continue;
 		}
 
-		if (this->cooldown >= this->stats.firerate && this->inRange(obj)) { // inRange checks for nullptr
+		if (this->cooldown >= this->stats.firerate && this->inRange(obj) && this != Game::beingDraggedShape) { // inRange checks for nullptr
 			this->cooldown = 0;
 			this->rotate(obj);
 			this->fire(obj);

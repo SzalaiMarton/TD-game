@@ -11,7 +11,7 @@ struct WindowConfig {
 
 struct GameConfig {
 	// default values are the default configs for the game
-	WindowConfig windowConfig{60, 1000, 600, "TD game"};
+	WindowConfig windowConfig{60, 1200, 800, "TD game"};
 	std::vector<CatType> availableCats{};
 
 	GameConfig();

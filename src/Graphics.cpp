@@ -61,11 +61,15 @@ void Renderer::refreshFrame() {
 	for (auto& layer : layers) {
 		if (!layer.second->getIsHidden()) {
 			for (auto& s : *layer.second->getShapes()) {
-				/*if (dynamic_cast<Square*>(s)) {
+				/* 
+				debug
+				if (dynamic_cast<Square*>(s)) {
 					s->draw(window);
 					continue;
-				}*/
-				if (s->attributes.hasComponent<SpriteComponent>() && Game::beingDraggedShape != s) {
+				}
+				debug 
+				*/
+				if (s && s->attributes.hasComponent<SpriteComponent>() && Game::beingDraggedShape != s) {
 					s->draw(window);
 				}
 			}
@@ -99,7 +103,7 @@ Layer* Renderer::getCurrentLayer() {
 }
 
 Layer::Layer(float xPos, float yPos, float xSize, float ySize) {
-	this->root = new QuadTree(xPos, yPos, (unsigned)xSize, (unsigned)ySize);
+	this->root = new QuadTree(xPos, yPos, (unsigned)xSize, (unsigned)ySize, "root");
 }
 
 void Layer::showLayer() {
