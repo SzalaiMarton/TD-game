@@ -1,6 +1,5 @@
 
 
-map -> path ratios
 ingame ui
 inventory
 pregame

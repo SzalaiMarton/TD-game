@@ -5,8 +5,6 @@ sf::View* Renderer::view{};
 std::map<MainLayerName, Layer*> Renderer::layers{};
 uint8_t Renderer::nextFreeIndex = 1;
 
-Renderer::Renderer() {}
-
 void Renderer::init(WindowConfig* config = nullptr) {
 	if (!window && config) {
 		window = new sf::RenderWindow(sf::VideoMode({ (unsigned)config->xSize, (unsigned)config->ySize }), config->name);
@@ -61,14 +59,12 @@ void Renderer::refreshFrame() {
 	for (auto& layer : layers) {
 		if (!layer.second->getIsHidden()) {
 			for (auto& s : *layer.second->getShapes()) {
-				/* 
-				debug
-				if (dynamic_cast<Square*>(s)) {
-					s->draw(window);
-					continue;
-				}
-				debug 
-				*/
+				// debug
+				//if (dynamic_cast<Square*>(s)) {
+				//	s->draw(window);
+				//	continue;
+				//}
+				// debug 
 				if (s && s->attributes.hasComponent<SpriteComponent>() && Game::beingDraggedShape != s) {
 					s->draw(window);
 				}
@@ -106,6 +102,17 @@ Layer::Layer(float xPos, float yPos, float xSize, float ySize) {
 	this->root = new QuadTree(xPos, yPos, (unsigned)xSize, (unsigned)ySize, "root");
 }
 
+Layer::~Layer() {
+	size_t i{};
+	while (i < shapes.size()) {
+		delete shapes[i];
+		i += 1;
+	}
+	shapes.clear();
+	delete root;
+	root = nullptr;
+}
+
 void Layer::showLayer() {
 	this->isHidden = false;
 	for (auto& e : shapes) {
@@ -137,17 +144,22 @@ BaseShape* Layer::addShape(BaseShape* shape, bool dontAddToTree) {
 }
 
 void Layer::removeShape(BaseShape* shape) {
-	if (shape) {
-		auto it = std::find(this->shapes.begin(), this->shapes.end(), shape);
-		if (it != this->shapes.end()) {
-			this->shapes.erase(it);
+	try {
+		if (shape) {
+			auto it = std::find(this->shapes.begin(), this->shapes.end(), shape);
+			if (it != this->shapes.end()) {
+				this->shapes.erase(it);
+			}
+			else {
+				ERROR("Layer::removeObject", "shape was not found.");
+			}
 		}
 		else {
-			ERROR("Layer::removeObject", "shape was not found.");
+			ERROR("Layer::removeObject", "shape was nullptr.");
 		}
 	}
-	else {
-		ERROR("Layer::removeObject", "shape was nullptr.");
+	catch (std::exception e) {
+		ERROR("Layer::removeShape", "something went wrong.");
 	}
 }
 

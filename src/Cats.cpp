@@ -1,12 +1,19 @@
 #include "stdafx.hpp"
 
 
-BlackGreyCat::BlackGreyCat() : BaseCat(0, 0, 64, 64, Assets::getTexture("black_grey_10x.png")) {
+BlackGreyCat::BlackGreyCat() : BaseCat(0, 0, 64, 64, Assets::getTexture(TextureName::blackGreyCat)) {
 	this->initClass();
 }
 
-BlackGreyCat::BlackGreyCat(float xPos, float yPos, float xSize, float ySize) : BaseCat(xPos, yPos, xSize, ySize, Assets::getTexture("black_grey.png")) {
+BlackGreyCat::BlackGreyCat(float xPos, float yPos, float xSize, float ySize) : BaseCat(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::blackGreyCat)) {
 	this->initClass();
+}
+
+OrangeCat::OrangeCat() : BaseCat(0, 0, 64, 64, Assets::getTexture(TextureName::orangeCat)) {
+
+}
+
+OrangeCat::OrangeCat(float xPos, float yPos, float xSize, float ySize) : BaseCat(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::orangeCat)) {
 }
 
 void BlackGreyCat::initClass() {
@@ -24,7 +31,7 @@ void BlackGreyCat::initClass() {
 
 bool BlackGreyCat::onUpdate() {
 	size_t i{};
-	auto& shapes = Renderer::getCurrentLayer()->shapes;
+	auto& shapes = Game::currentLayer->shapes;
 	auto res = false;
 	while (i < shapes.size()) {
 		auto obj = dynamic_cast<Target*>(shapes[i]);
@@ -132,4 +139,38 @@ BaseCat::BaseCat() : BaseShape(0, 0, 64, 64, Assets::getTexture("default_texture
 
 BaseCat::BaseCat(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture) : BaseShape(xPos, yPos, xSize, ySize, texture) {
 	this->initClass();
+}
+
+BaseCat::~BaseCat() {
+	delete range;
+	range = nullptr;
+}
+
+constexpr uint16_t getPriceByType(CatType type) {
+	switch (type) {
+	case CatType::BLACKGREY:
+		return blackGreyPrice;
+	case CatType::ORANGE:
+		return orangePrice;
+	}
+	return 0;
+}
+
+void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos, float xSize, float ySize) {
+	if (bindTo) {
+		return;
+	}
+	auto layer = Game::currentLayer;
+	switch (type) {
+	case CatType::BLACKGREY:
+		bindTo = new BlackGreyCat(xPos, yPos, xSize, ySize);
+		break;
+	case CatType::ORANGE:
+		bindTo = new OrangeCat(xPos, yPos, xSize, ySize);
+		break;
+	default:
+		bindTo = new BlackGreyCat(xPos, yPos, xSize, ySize);
+		break;
+	}
+	layer->addShape(bindTo);
 }

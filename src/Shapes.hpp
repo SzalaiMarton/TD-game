@@ -2,14 +2,20 @@
 
 class Attribute;
 class Layer;
-class QuadTree;
+struct QuadTree;
+class BaseCat;
+
+constexpr extern uint16_t getPriceByType(CatType type);
+extern void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos, float xSize, float ySize);
 
 struct BaseShape {
 	Attribute attributes{};
 	bool isHidden{false};
 	std::set<QuadTree*> treeNodes{};
-	std::string name{"-"};
 	Layer* parentLayer{};
+	//debug
+	std::string name{"-"};
+	//debug
 
 	BaseShape() = default;
 	BaseShape(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture);
@@ -41,6 +47,7 @@ struct Button : public BaseShape {
 
 	Button(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture, const std::string& text);
 	Button(const sf::Vector2f& pos, const sf::Vector2f& size, sf::Texture* texture, const std::string& text);
+	~Button();
 
 	bool onUpdate() override { return false; }
 
@@ -57,6 +64,7 @@ struct InvetoryCard : public BaseShape {
 
 	InvetoryCard(float xPos, float yPos, float xSize, float ySize, CatType catType);
 	InvetoryCard(const sf::Vector2f& pos, const sf::Vector2f& size, CatType catType);
+	~InvetoryCard();
 
 	bool onUpdate() override { return false; }
 
@@ -67,15 +75,42 @@ struct InvetoryCard : public BaseShape {
 struct Square : public BaseShape {
 	sf::RectangleShape* s{};
 	bool isVisible{true};
+
 	Square(float xPos, float yPos, float xSize, float ySize);
+	~Square();
 
 	bool onUpdate() override { return false; }
 
 	void draw(sf::RenderWindow* window) override;
 };
 
-class QuadTree {
-public:
+struct InGameCard : Button {
+	static float iconOffset;
+	static float textOffset;
+
+	Shape* icon{};
+	BaseCat* draggedCat{};
+
+	InGameCard(float xPos, float yPos, float xSize, float ySize, CatType type);
+	~InGameCard();
+
+	void initClass(CatType type);
+	void draw(sf::RenderWindow* window) override;
+
+	static void hoverHandler(InGameCard* card);
+	static void hoverLossHandler(InGameCard* card);
+};
+
+struct InGameCardDesk : public Shape {
+	std::vector<InGameCard*> cards{};
+
+	InGameCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l);
+	~InGameCardDesk();
+
+	void draw(sf::RenderWindow* window) override;
+};
+
+struct QuadTree {
 	static unsigned smallestSize;
 	
 	float xPos, yPos;

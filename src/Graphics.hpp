@@ -5,7 +5,6 @@ struct Shape;
 struct WindowConfig;
 enum class MainLayerName;
 
-
 class Layer {
 public:
 	std::vector<BaseShape*> shapes{};
@@ -13,6 +12,7 @@ public:
 	QuadTree* root;
 
 	Layer(float xPos, float yPos, float xSize, float ySize);
+	~Layer();
 
 	void showLayer();
 	void hideLayer();
@@ -23,20 +23,18 @@ public:
 };
 
 class Renderer {
-private:
+public:
 	static sf::RenderWindow* window;
-	static std::map<MainLayerName, Layer*> layers;
 	static uint8_t nextFreeIndex;
 	static sf::View* view;
-	Renderer();
+	static std::map<MainLayerName, Layer*> layers;
 
-public:
 	static void init(WindowConfig* config);
-	static sf::RenderWindow* getWindow();
 	static void pushLayer(Layer* layer, MainLayerName index);
 	static void removeLayer(MainLayerName index, Layer* layer);
 	static void refreshFrame();
 	static void onResize();
 	static Layer* getLayer(MainLayerName index);
 	static Layer* getCurrentLayer();
+	static sf::RenderWindow* getWindow();
 };

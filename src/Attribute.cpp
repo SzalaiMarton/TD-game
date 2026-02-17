@@ -41,6 +41,11 @@ SpriteComponent::SpriteComponent(const SpriteComponent& original) {
 	this->originalTextureSize = original.originalTextureSize;
 }
 
+SpriteComponent::~SpriteComponent() {
+	delete sprite;
+	sprite = nullptr;
+}
+
 SpriteComponent* SpriteComponent::copy() const {
 	return new SpriteComponent(*this);
 }
@@ -115,8 +120,12 @@ void MIC::bindDragHandler(std::function<void()> onD) {
 	this->handlers.insert({ HandlerType::DRAGHANDLER, onD });
 }
 
-void MIC::bindHoverLossHandler(std::function<void()> onLF) {
-	this->handlers.insert({ HandlerType::HOVERLOSSHANDLER, onLF });
+void MIC::bindHoverLossHandler(std::function<void()> onHL) {
+	this->handlers.insert({ HandlerType::HOVERLOSSHANDLER, onHL });
+}
+
+void MIC::bindDragLoss(std::function<void()> onDL) {
+	this->handlers.insert({ HandlerType::DRAGLOSSHANDLER, onDL });
 }
 
 void MouseInteractionComponent::enableClick() {
@@ -129,6 +138,14 @@ void MouseInteractionComponent::enableDrag() {
 
 void MouseInteractionComponent::enableHover() {
 	this->isHoverable = true;
+}
+
+void MouseInteractionComponent::enableBaseDrag() {
+	this->isBaseDrag = true;
+}
+
+void MouseInteractionComponent::disableBaseDrag() {
+	this->isBaseDrag = false;
 }
 
 void MouseInteractionComponent::disableClick() {
@@ -186,6 +203,17 @@ void MouseInteractionComponent::onClickLoss() const {
 void MIC::onDrag(const sf::Vector2i& pMouse, BaseShape* shape) const {
 	if (this->handlers.find(HandlerType::DRAGHANDLER) != this->handlers.end() && this->isDraggable) {
 		this->handlers.at(HandlerType::DRAGHANDLER)();
-		shape->attributes.getComponent<SpriteComponent>()->sprite->setPosition({ (float)pMouse.x ,(float)pMouse.y });
+		if (isBaseDrag) {
+			shape->attributes.getComponent<SpriteComponent>()->sprite->setPosition({ (float)pMouse.x ,(float)pMouse.y });
+		}
+	}
+}
+
+void MouseInteractionComponent::onDragLoss() const {
+	if (this->handlers.find(HandlerType::DRAGLOSSHANDLER) != this->handlers.end()) {
+		this->handlers.at(HandlerType::DRAGLOSSHANDLER)();
+	}
+	else {
+		ERROR("MouseInteractionComponent::onDragLoss", "Handler was nullptr.");
 	}
 }

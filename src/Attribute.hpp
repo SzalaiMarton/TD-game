@@ -22,6 +22,7 @@ struct MouseInteractionComponent : public ObjectComponent {
 	bool isClickable{true};
 	bool isHoverable{true};
 	bool isDraggable{true};
+	bool isBaseDrag{false};
 
 	std::unordered_map<HandlerType, std::function<void()>> handlers;
 
@@ -33,13 +34,17 @@ struct MouseInteractionComponent : public ObjectComponent {
 	void bindHoverHandler(std::function<void()> onH);
 	void bindDragHandler(std::function<void()> onD);
 	void bindHoverLossHandler(std::function<void()> onLF);
+	void bindDragLoss(std::function<void()> onDL);
 
 	void enableClick();
 	void enableDrag();
 	void enableHover();
+	void enableBaseDrag();
+
 	void disableClick();
 	void disableDrag();
 	void disableHover();
+	void disableBaseDrag();
 
 	bool isHovered(sf::Vector2i& pMouse, sf::FloatRect& bounds) const;
 	void onHover() const;
@@ -47,6 +52,7 @@ struct MouseInteractionComponent : public ObjectComponent {
 	void onHoverLoss() const;
 	void onClickLoss() const;
 	void onDrag(const sf::Vector2i& pMouse, BaseShape* shape) const;
+	void onDragLoss() const;
 };
 using MIC = MouseInteractionComponent;
 
@@ -56,6 +62,7 @@ struct SpriteComponent : public ObjectComponent {
 
 	SpriteComponent(sf::Texture* texture);
 	SpriteComponent(const SpriteComponent& original);
+	~SpriteComponent();
 	SpriteComponent* copy() const override;
 
 	void setSize(float x, float y);

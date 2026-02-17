@@ -97,7 +97,7 @@ TargetStats* createTargetStats(TargetType type) {
 }
 
 TargetStats* createPlaceHolder() {
-	return new TargetStats(10, 5, { 30.f, 30.f }, TargetType::NONE);
+	return new TargetStats(10, 2, { 30.f, 30.f }, TargetType::NONE);
 }
 
 TargetGroup::TargetGroup(uint8_t amount, TargetType type) {

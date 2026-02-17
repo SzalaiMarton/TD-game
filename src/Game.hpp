@@ -11,7 +11,7 @@ struct WindowConfig {
 
 struct GameConfig {
 	// default values are the default configs for the game
-	WindowConfig windowConfig{60, 1200, 800, "TD game"};
+	WindowConfig windowConfig{60, 1100, 700, "TD game"};
 	std::vector<CatType> availableCats{};
 
 	GameConfig();
@@ -25,18 +25,21 @@ struct GameConfig {
 
 class Game {
 public:
-	static GameConfig config;
-	static bool wasHolding;
+	static bool shuttingdown;
+	static std::queue<std::pair<uint8_t, TargetType>> waitingTargets;
+	static std::vector<CatType> selectedCats;
+	static TargetGroup* currentGroup;
 	static BaseShape* beingDraggedShape;
 	static BaseShape* clickedShape;
 	static BaseShape* beingHoveredShape;
-	static std::queue<std::pair<uint8_t, TargetType>> waitingTargets;
 	static BaseMap* currentMap;
+	static Layer* currentLayer;
+	static GameConfig config;
+	static GameState currentState;
 	static uint16_t currentWaitTime;
 	static uint16_t timeWaited;
-	static TargetGroup* currentGroup;
-	static Layer* currentLayer;
-	static GameState currentState;
+	static uint16_t money;
+	static bool wasHolding;
 
 	Game();
 

@@ -1,8 +1,18 @@
 #pragma once
 
+namespace TextureName {
+	static std::string blackGreyCat = "black_grey.png";
+	static std::string orangeCat = "orange.png";
+	static std::string defalutTexture = "default_texture.png";
+	static std::string inventoryCard = "inventory_card.png";
+	static std::string placeHolderMap = "place_holder_map.png";
+	static std::string ingameCard = "ingame_card.png";
+}
+
 enum class CatType {
 	BLACKGREY,
-	ORANGE
+	ORANGE,
+	NONE
 };
 
 enum class TargetType {
@@ -40,7 +50,8 @@ enum class HandlerType {
 	DRAGHANDLER,
 	HOVERHANDLER,
 	HOVERLOSSHANDLER,
-	CLICKLOSSHANDLER
+	CLICKLOSSHANDLER,
+	DRAGLOSSHANDLER
 };
 
 enum class BulletType {

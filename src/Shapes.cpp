@@ -3,6 +3,8 @@
 sf::Font* Button::buttonFont = nullptr;
 sf::Font* InvetoryCard::cardFont = nullptr;
 unsigned QuadTree::smallestSize = 200;
+float InGameCard::iconOffset = -15.f;
+float InGameCard::textOffset = 15.f;
 
 BaseShape::BaseShape(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture) {
 	this->initClass(xPos, yPos, xSize, ySize, texture);
@@ -76,6 +78,11 @@ Button::Button(const sf::Vector2f& pos, const sf::Vector2f& size, sf::Texture* t
 	this->initClass(text);
 }
 
+Button::~Button() {
+	delete text;
+	text = nullptr;
+}
+
 void Button::addClickHanlder(std::function<void()> handler) {
 	if (handler) {
 		this->attributes.getComponent<MIC>()->handlers.insert({HandlerType::CLICKHANDLER, handler});
@@ -92,9 +99,7 @@ void Button::initClass(const std::string& text) {
 		Assets::loadFonts(Assets::fontsPath);
 		buttonFont = Assets::getFont("ManlineSlabs_t.ttf");
 	}
-
-	auto bound =this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
-	this->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ bound.x / 2, bound.y / 2 });
+	
 	try {
 		this->text = new sf::Text(*buttonFont);
 		this->text->setString(text);
@@ -109,12 +114,17 @@ void Button::initClass(const std::string& text) {
 		ERROR("Button::Button", e.what());
 	}
 
+	auto pos = this->attributes.getComponent<SpriteComponent>()->getPos();
+	auto bound = this->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size;
+	this->attributes.getComponent<SpriteComponent>()->setPos(pos.x - bound.x / 2, pos.y - bound.y / 2);
+
 	std::initializer_list<MIC::SingleHandler> handlers = {
 		MIC::SingleHandler(HandlerType::HOVERHANDLER, [this]() { this->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255,255,255,128)); }),
 		MIC::SingleHandler(HandlerType::HOVERLOSSHANDLER, [this]() { this->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255,255,255,255)); })
 	};
 
 	this->attributes.addComponent<MIC>(new MIC(handlers));
+	//this->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ 0, 0 });
 }
 
 void Shape::draw(sf::RenderWindow* window) {
@@ -126,19 +136,40 @@ QuadTree::QuadTree(float x, float y, unsigned xs, unsigned ys, std::string name)
 }
 
 QuadTree::~QuadTree() {
-	this->elements.clear();
-	delete this->ne;
-	delete this->nw;
-	delete this->se;
-	delete this->sw;
-	this->se = nullptr;
-	this->ne = nullptr;
-	this->sw = nullptr;
-	this->nw = nullptr;
+	elements.clear();
+	delete ne;
+	delete nw;
+	delete se;
+	delete sw;
+	se = nullptr;
+	ne = nullptr;
+	sw = nullptr;
+	nw = nullptr;
 }
 
 void QuadTree::insert(BaseShape* e) {
-	if (!e || !this || !this->contains(e->attributes.getComponent<SpriteComponent>()->getPos(), e->attributes.getComponent<SpriteComponent>()->getPos() + e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size)) {
+	if (!e || 
+		!this || 
+		!this->contains(e->attributes.getComponent<SpriteComponent>()->getPos(), 
+			e->attributes.getComponent<SpriteComponent>()->getPos() + 
+			e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size)
+		) {
+		//debug
+		//if (this && dynamic_cast<InGameCard*>(e)) {
+		//	LOG(e << " was not inserted to " << this->name);
+		//	LOG((this->contains(e->attributes.getComponent<SpriteComponent>()->getPos(),
+		//		e->attributes.getComponent<SpriteComponent>()->getPos() +
+		//		e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size)
+		//		));
+		//	LOG(e->attributes.getComponent<SpriteComponent>()->getPos().x << " " <<
+		//		e->attributes.getComponent<SpriteComponent>()->getPos().y << "    " << 
+		//		(e->attributes.getComponent<SpriteComponent>()->getPos() + 
+		//			e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size).x << " " <<
+		//		(e->attributes.getComponent<SpriteComponent>()->getPos() +
+		//			e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size).y
+		//	);
+		//}
+		//debug
 		return;
 	}
 	
@@ -154,19 +185,19 @@ void QuadTree::insert(BaseShape* e) {
 }
 
 bool QuadTree::containsCaseOverlap(const sf::Vector2f& pos, const sf::Vector2f& bound) const {
-	float left = xPos;
-	float right = xPos + xSize;
-	float top = yPos;
-	float bottom = yPos + ySize;
+	float left = this->xPos;
+	float right = this->xPos + this->xSize;
+	float top = this->yPos;
+	float bottom = this->yPos + this->ySize;
 
 	return !(right <= pos.x || left >= bound.x || bottom <= pos.y || top >= bound.y);
 }
 
 bool QuadTree::containsCaseOverlap(float xPos, float yPos, float xBound, float yBound) const {
-	float left = xPos;
-	float right = xPos + xSize;
-	float top = yPos;
-	float bottom = yPos + ySize;
+	float left = this->xPos;
+	float right = this->xPos + this->xSize;
+	float top = this->yPos;
+	float bottom = this->yPos + this->ySize;
 
 	return !(right < xPos || left > xBound || bottom < yPos || top > yBound);
 }
@@ -261,6 +292,15 @@ InvetoryCard::InvetoryCard(const sf::Vector2f& pos, const sf::Vector2f& size, Ca
 	this->initClass(catType);
 }
 
+InvetoryCard::~InvetoryCard() {
+	delete displayCat;
+	displayCat = nullptr;
+	delete displayCatDescription;
+	displayCatDescription = nullptr;
+	delete displayCatName;
+	displayCatName = nullptr;
+}
+
 void InvetoryCard::draw(sf::RenderWindow* window) {
 	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
 	if (this->displayCat) {
@@ -272,6 +312,31 @@ void InvetoryCard::draw(sf::RenderWindow* window) {
 	if (this->displayCatName) {
 		window->draw(*this->displayCatName);
 	}
+}
+
+InGameCard::InGameCard(float xPos, float yPos, float xSize, float ySize, CatType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string(getPriceByType(type))) {
+	this->text->setPosition({ xPos, yPos + InGameCard::textOffset });
+	
+	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(catTypeToString(type) + ".png"));
+	auto iconBound = this->icon->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
+	this->icon->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ iconBound.x / 2, iconBound.y / 2 });
+	this->icon->attributes.getComponent<SpriteComponent>()->setPos({ xPos, yPos + InGameCard::iconOffset });
+
+	this->attributes.getComponent<MIC>()->disableClick();
+	this->attributes.getComponent<MIC>()->disableBaseDrag();
+	this->attributes.getComponent<MIC>()->bindDragHandler([this, type]() {
+			createCat(this->draggedCat, type, 0.f, 0.f, 60.f, 40.f);
+			this->draggedCat->attributes.getComponent<SpriteComponent>()->setPos((sf::Vector2f)sf::Mouse::getPosition(*Renderer::getWindow()));
+		});
+	this->attributes.getComponent<MIC>()->bindDragLoss([this]() {
+			this->draggedCat->updateTree();
+			this->draggedCat = nullptr;
+		});
+}
+
+InGameCard::~InGameCard() {
+	delete icon;
+	icon = nullptr;
 }
 
 void InvetoryCard::initClass(CatType catType) {
@@ -297,6 +362,28 @@ void InvetoryCard::initClass(CatType catType) {
 	this->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ 0.f, this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size.y / 2 });
 }
 
+void InGameCard::draw(sf::RenderWindow* window) {
+	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
+	window->draw(*this->icon->attributes.getComponent<SpriteComponent>()->sprite);
+	window->draw(*this->text);
+}
+
+void InGameCard::hoverHandler(InGameCard* card) {
+	if (card) {
+		card->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 128));
+		card->icon->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 128));
+		card->text->setFillColor(sf::Color(255, 255, 255, 128));
+	}
+}
+
+void InGameCard::hoverLossHandler(InGameCard* card) {
+	if (card) {
+		card->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 255));
+		card->icon->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 255));
+		card->text->setFillColor(sf::Color(255, 255, 255, 255));
+	}
+}
+
 Square::Square(float xPos, float yPos, float xSize, float ySize) : BaseShape() {
 	this->s = new sf::RectangleShape({ xSize, ySize });
 	this->s->setPosition({xPos, yPos});
@@ -305,8 +392,33 @@ Square::Square(float xPos, float yPos, float xSize, float ySize) : BaseShape() {
 	this->s->setOutlineColor(sf::Color(sf::Color::Red));
 }
 
+Square::~Square() {
+	delete s;
+	s = nullptr;
+}
+
 void Square::draw(sf::RenderWindow* window) {
 	if (this->s && this->isVisible) {
 		window->draw(*this->s);
+	}
+}
+
+InGameCardDesk::InGameCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l)
+	: Shape(xPos, yPos, xSize, ySize, Assets::getTexture("default_texture.png")) {
+	this->cards.reserve(Game::selectedCats.size());
+	auto startingPos = this->attributes.getComponent<SpriteComponent>()->getPos();
+	startingPos.x += 80;
+	startingPos.y += 50;
+	int i = 0;
+	for (auto& e : Game::selectedCats) {
+		this->cards.push_back(dynamic_cast<InGameCard*>(l->addShape(new InGameCard(startingPos.x + (100 * i), startingPos.y, 80, 80, e))));
+		i += 1;
+	}
+}
+
+void InGameCardDesk::draw(sf::RenderWindow* window) {
+	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
+	for (auto& e : this->cards) {
+		e->draw(window);
 	}
 }
