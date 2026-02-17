@@ -29,3 +29,5 @@
 #include "Logger.hpp"
 #include "Targets.hpp"
 #include "Game.hpp"
+
+// onUpdate returns true if something died, returns false if not

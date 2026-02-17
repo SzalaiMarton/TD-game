@@ -21,6 +21,7 @@ bool BaseBullet::onUpdate() {
 		return true;
 	}
 	if (this->checkCollision()) {
+		LOG("collision");
 		return true;
 	}
 	this->updateTree();
@@ -34,6 +35,7 @@ void BaseBullet::onCollision(Target* target) {
 }
 
 bool BaseBullet::checkCollision() {
+	LOG(this->treeNodes.size());
 	for (auto& e : this->treeNodes) {
 		for (auto& obj : e->elements) {
 			if (this->isColliding(dynamic_cast<Target*>(obj))) {

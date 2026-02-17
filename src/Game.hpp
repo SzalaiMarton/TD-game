@@ -28,6 +28,7 @@ public:
 	static bool shuttingdown;
 	static std::queue<std::pair<uint8_t, TargetType>> waitingTargets;
 	static std::vector<CatType> selectedCats;
+	static std::vector<TargetType> availableTargets;
 	static TargetGroup* currentGroup;
 	static BaseShape* beingDraggedShape;
 	static BaseShape* clickedShape;
@@ -43,23 +44,23 @@ public:
 
 	Game();
 
-	void init();
-	void run();
-	void shutdown();
-	void update();
+	static void init();
+	static void run();
+	static void shutdown();
+	static void update();
 
-	void handleClick();
-	void handleDrag();
-	void handleHover();
+	static void handleClick();
+	static void handleDrag();
+	static void handleHover();
 
-	void handleInGame();
+	static void handleInGame();
 
-	void initMainMenu();
-	void initLayers();
-	void initInventory();
-	void initInGame();
+	static void initMainMenu();
+	static void initLayers();
+	static void initInventory();
+	static void initInGame();
 
-	void switchLayer(GameState from, GameState to);
-	void queueTarget(uint8_t amount, TargetType type);
-	void initGroup();
+	static void switchLayer(GameState from, GameState to);
+	static void queueTarget(uint8_t amount, TargetType type);
+	static void initGroup();
 };

@@ -78,6 +78,17 @@ constexpr std::string catTypeToString(CatType catType) {
 	}
 }
 
+constexpr std::string catTypeToTextureName(CatType catType) {
+	switch (catType) {
+	case CatType::BLACKGREY:
+		return TextureName::blackGreyCat;
+	case CatType::ORANGE:
+		return TextureName::orangeCat;
+	default:
+		return TextureName::defalutTexture;
+	}
+}
+
 constexpr MainLayerName gameStateToLayerName(GameState state) {
 	switch (state) {
 	case GameState::MAINMENU:
@@ -108,4 +119,13 @@ constexpr GameState layerNameToGameState(MainLayerName layer) {
 		return GameState::INVENTORY;
 	}
 	return GameState::NONE;
+}
+
+constexpr std::string targetTypeToTextureName(TargetType type) {
+	switch (type) {
+	case TargetType::BASIC:
+		return TextureName::defalutTexture;
+	default:
+		return TextureName::defalutTexture;
+	}
 }

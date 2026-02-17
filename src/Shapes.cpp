@@ -3,8 +3,10 @@
 sf::Font* Button::buttonFont = nullptr;
 sf::Font* InvetoryCard::cardFont = nullptr;
 unsigned QuadTree::smallestSize = 200;
-float InGameCard::iconOffset = -15.f;
-float InGameCard::textOffset = 15.f;
+float InGameCatCard::iconOffset = -15.f;
+float InGameCatCard::textOffset = 15.f;
+float InGameTargetCard::iconOffset = -15.f;
+float InGameTargetCard::textOffset = 15.f;
 
 BaseShape::BaseShape(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture) {
 	this->initClass(xPos, yPos, xSize, ySize, texture);
@@ -124,7 +126,6 @@ void Button::initClass(const std::string& text) {
 	};
 
 	this->attributes.addComponent<MIC>(new MIC(handlers));
-	//this->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ 0, 0 });
 }
 
 void Shape::draw(sf::RenderWindow* window) {
@@ -154,22 +155,6 @@ void QuadTree::insert(BaseShape* e) {
 			e->attributes.getComponent<SpriteComponent>()->getPos() + 
 			e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size)
 		) {
-		//debug
-		//if (this && dynamic_cast<InGameCard*>(e)) {
-		//	LOG(e << " was not inserted to " << this->name);
-		//	LOG((this->contains(e->attributes.getComponent<SpriteComponent>()->getPos(),
-		//		e->attributes.getComponent<SpriteComponent>()->getPos() +
-		//		e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size)
-		//		));
-		//	LOG(e->attributes.getComponent<SpriteComponent>()->getPos().x << " " <<
-		//		e->attributes.getComponent<SpriteComponent>()->getPos().y << "    " << 
-		//		(e->attributes.getComponent<SpriteComponent>()->getPos() + 
-		//			e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size).x << " " <<
-		//		(e->attributes.getComponent<SpriteComponent>()->getPos() +
-		//			e->attributes.getComponent<SpriteComponent>()->sprite->getGlobalBounds().size).y
-		//	);
-		//}
-		//debug
 		return;
 	}
 	
@@ -314,33 +299,74 @@ void InvetoryCard::draw(sf::RenderWindow* window) {
 	}
 }
 
-InGameCard::InGameCard(float xPos, float yPos, float xSize, float ySize, CatType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string(getPriceByType(type))) {
-	this->text->setPosition({ xPos, yPos + InGameCard::textOffset });
+InGameCatCard::InGameCatCard(float xPos, float yPos, float xSize, float ySize, CatType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string(getPriceByType(type))) {
+	this->text->setPosition({ xPos, yPos + InGameCatCard::textOffset });
 	
-	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(catTypeToString(type) + ".png"));
+	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(catTypeToTextureName(type)));
 	auto iconBound = this->icon->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
 	this->icon->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ iconBound.x / 2, iconBound.y / 2 });
-	this->icon->attributes.getComponent<SpriteComponent>()->setPos({ xPos, yPos + InGameCard::iconOffset });
+	this->icon->attributes.getComponent<SpriteComponent>()->setPos({ xPos, yPos + InGameCatCard::iconOffset });
 
 	this->attributes.getComponent<MIC>()->disableClick();
 	this->attributes.getComponent<MIC>()->disableBaseDrag();
 	this->attributes.getComponent<MIC>()->bindDragHandler([this, type]() {
 			createCat(this->draggedCat, type, 0.f, 0.f, 60.f, 40.f);
+			this->draggedCat->showRange();
+			this->draggedCat->attributes.getComponent<MIC>()->onDrag(sf::Mouse::getPosition(*Renderer::getWindow()), this);
 			this->draggedCat->attributes.getComponent<SpriteComponent>()->setPos((sf::Vector2f)sf::Mouse::getPosition(*Renderer::getWindow()));
 		});
 	this->attributes.getComponent<MIC>()->bindDragLoss([this]() {
 			this->draggedCat->updateTree();
+			this->draggedCat->enableCat();
+			this->draggedCat->hideRange();
 			this->draggedCat = nullptr;
 		});
 }
 
-InGameCard::~InGameCard() {
+InGameCatCard::~InGameCatCard() {
+	delete icon;
+	icon = nullptr;
+	draggedCat = nullptr;
+}
+
+InGameTargetCard::InGameTargetCard(float xPos, float yPos, float xSize, float ySize, TargetType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string(getPriceByType(type))) {
+	this->text->setPosition({ xPos, yPos + InGameTargetCard::textOffset });
+
+	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(targetTypeToTextureName(type)));
+	auto iconBound = this->icon->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
+	this->icon->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ iconBound.x / 2, iconBound.y / 2 });
+	this->icon->attributes.getComponent<SpriteComponent>()->setPos({ xPos, yPos + InGameTargetCard::iconOffset });
+
+	this->attributes.getComponent<MIC>()->disableBaseDrag();
+	this->attributes.getComponent<MIC>()->disableDrag();
+	this->attributes.getComponent<MIC>()->bindClickHandler([type]() {
+			Game::queueTarget(getAmountByType(type), type);
+		});
+}
+
+InGameTargetCard::~InGameTargetCard() {
 	delete icon;
 	icon = nullptr;
 }
 
+void InGameTargetCard::hoverHandler(InGameTargetCard* card) {
+	if (card) {
+		card->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 128));
+		card->icon->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 128));
+		card->text->setFillColor(sf::Color(255, 255, 255, 128));
+	}
+}
+
+void InGameTargetCard::hoverLossHandler(InGameTargetCard* card) {
+	if (card) {
+		card->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 255));
+		card->icon->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 255));
+		card->text->setFillColor(sf::Color(255, 255, 255, 255));
+	}
+}
+
 void InvetoryCard::initClass(CatType catType) {
-	auto dC = Assets::getTexture(catTypeToString(catType) + ".png");
+	auto dC = Assets::getTexture(catTypeToTextureName(catType));
 	this->displayCat = dC ? new sf::Sprite(*dC) : nullptr;
 
 	try {
@@ -362,13 +388,19 @@ void InvetoryCard::initClass(CatType catType) {
 	this->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ 0.f, this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size.y / 2 });
 }
 
-void InGameCard::draw(sf::RenderWindow* window) {
+void InGameTargetCard::draw(sf::RenderWindow* window) {
 	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
 	window->draw(*this->icon->attributes.getComponent<SpriteComponent>()->sprite);
 	window->draw(*this->text);
 }
 
-void InGameCard::hoverHandler(InGameCard* card) {
+void InGameCatCard::draw(sf::RenderWindow* window) {
+	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
+	window->draw(*this->icon->attributes.getComponent<SpriteComponent>()->sprite);
+	window->draw(*this->text);
+}
+
+void InGameCatCard::hoverHandler(InGameCatCard* card) {
 	if (card) {
 		card->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 128));
 		card->icon->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 128));
@@ -376,7 +408,7 @@ void InGameCard::hoverHandler(InGameCard* card) {
 	}
 }
 
-void InGameCard::hoverLossHandler(InGameCard* card) {
+void InGameCatCard::hoverLossHandler(InGameCatCard* card) {
 	if (card) {
 		card->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 255));
 		card->icon->attributes.getComponent<SpriteComponent>()->sprite->setColor(sf::Color(255, 255, 255, 255));
@@ -403,7 +435,7 @@ void Square::draw(sf::RenderWindow* window) {
 	}
 }
 
-InGameCardDesk::InGameCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l)
+InGameCatCardDesk::InGameCatCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l)
 	: Shape(xPos, yPos, xSize, ySize, Assets::getTexture("default_texture.png")) {
 	this->cards.reserve(Game::selectedCats.size());
 	auto startingPos = this->attributes.getComponent<SpriteComponent>()->getPos();
@@ -411,12 +443,46 @@ InGameCardDesk::InGameCardDesk(float xPos, float yPos, float xSize, float ySize,
 	startingPos.y += 50;
 	int i = 0;
 	for (auto& e : Game::selectedCats) {
-		this->cards.push_back(dynamic_cast<InGameCard*>(l->addShape(new InGameCard(startingPos.x + (100 * i), startingPos.y, 80, 80, e))));
+		this->cards.push_back(dynamic_cast<InGameCatCard*>(l->addShape(new InGameCatCard(startingPos.x + (100 * i), startingPos.y, 80, 80, e))));
 		i += 1;
 	}
 }
 
-void InGameCardDesk::draw(sf::RenderWindow* window) {
+InGameCatCardDesk::~InGameCatCardDesk() {
+	for (auto& e : this->cards) {
+		delete e;
+	}
+	this->cards.clear();
+}
+
+void InGameCatCardDesk::draw(sf::RenderWindow* window) {
+	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
+	for (auto& e : this->cards) {
+		e->draw(window);
+	}
+}
+
+InGameTargetCardDesk::InGameTargetCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l)
+	: Shape(xPos, yPos, xSize, ySize, Assets::getTexture("default_texture.png")) {
+	this->cards.reserve(Game::availableTargets.size());
+	auto startingPos = this->attributes.getComponent<SpriteComponent>()->getPos();
+	startingPos.x += 50;
+	startingPos.y += 80;
+	int i = 0;
+	for (auto& e : Game::availableTargets) {
+		this->cards.push_back(dynamic_cast<InGameTargetCard*>(l->addShape(new InGameTargetCard(startingPos.x, startingPos.y + (100 * i), 80, 80, e))));
+		i += 1;
+	}
+}
+
+InGameTargetCardDesk::~InGameTargetCardDesk() {
+	for (auto& e : this->cards) {
+		delete e;
+	}
+	this->cards.clear();
+}
+
+void InGameTargetCardDesk::draw(sf::RenderWindow* window) {
 	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
 	for (auto& e : this->cards) {
 		e->draw(window);

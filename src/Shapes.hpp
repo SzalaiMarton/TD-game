@@ -6,7 +6,10 @@ struct QuadTree;
 class BaseCat;
 
 constexpr extern uint16_t getPriceByType(CatType type);
+constexpr extern uint16_t getPriceByType(TargetType type);
+constexpr extern uint8_t getAmountByType(TargetType type);
 extern void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos, float xSize, float ySize);
+
 
 struct BaseShape {
 	Attribute attributes{};
@@ -84,28 +87,53 @@ struct Square : public BaseShape {
 	void draw(sf::RenderWindow* window) override;
 };
 
-struct InGameCard : Button {
+struct InGameCatCard : Button {
 	static float iconOffset;
 	static float textOffset;
 
 	Shape* icon{};
 	BaseCat* draggedCat{};
 
-	InGameCard(float xPos, float yPos, float xSize, float ySize, CatType type);
-	~InGameCard();
+	InGameCatCard(float xPos, float yPos, float xSize, float ySize, CatType type);
+	~InGameCatCard();
 
 	void initClass(CatType type);
 	void draw(sf::RenderWindow* window) override;
 
-	static void hoverHandler(InGameCard* card);
-	static void hoverLossHandler(InGameCard* card);
+	static void hoverHandler(InGameCatCard* card);
+	static void hoverLossHandler(InGameCatCard* card);
 };
 
-struct InGameCardDesk : public Shape {
-	std::vector<InGameCard*> cards{};
+struct InGameCatCardDesk : public Shape {
+	std::vector<InGameCatCard*> cards{};
 
-	InGameCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l);
-	~InGameCardDesk();
+	InGameCatCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l);
+	~InGameCatCardDesk();
+
+	void draw(sf::RenderWindow* window) override;
+};
+
+struct InGameTargetCard : Button {
+	static float iconOffset;
+	static float textOffset;
+
+	Shape* icon{};
+
+	InGameTargetCard(float xPos, float yPos, float xSize, float ySize, TargetType type);
+	~InGameTargetCard();
+
+	void initClass(CatType type);
+	void draw(sf::RenderWindow* window) override;
+
+	static void hoverHandler(InGameTargetCard* card);
+	static void hoverLossHandler(InGameTargetCard* card);
+};
+
+struct InGameTargetCardDesk : public Shape {
+	std::vector<InGameTargetCard*> cards{};
+
+	InGameTargetCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l);
+	~InGameTargetCardDesk();
 
 	void draw(sf::RenderWindow* window) override;
 };

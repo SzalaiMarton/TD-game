@@ -25,25 +25,31 @@ protected:
 	sf::CircleShape* range{};
 	std::vector<BaseBullet*> bullets{};
 	uint16_t cooldown{};
+	bool isDisabled{true};
 
 public:
 	BaseCat();
 	BaseCat(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture);
 	~BaseCat();
 
-	virtual void fire(Target* target) = 0;
+	virtual void fire(Target* target);
+	virtual bool onUpdate();
 
 	void onDrag();
 	void onClick();
 	void onClickLoss();
-	bool inRange(Target* target);
 	void deleteBullet(BaseBullet* bullet);
-
+	
+	void enableCat();
+	void disableCat();
 	void showRange();
 	void hideRange();
 
+	bool checkForFire();
+	bool inRange(Target* target);
 	void rotate(Target* target);
 	void draw(sf::RenderWindow* window) override;
+	
 	void initClass();
 };
 
@@ -53,9 +59,6 @@ public:
 	BlackGreyCat(float xPos, float yPos, float xSize, float ySize);
 
 	void initClass();
-
-	bool onUpdate() override;
-	void fire(Target* target) override;
 };
 
 class OrangeCat : public BaseCat {
@@ -64,8 +67,5 @@ public:
 	OrangeCat(float xPos, float yPos, float xSize, float ySize);
 
 	void initClass();
-
-	bool onUpdate() override { return false; };
-	void fire(Target* target) override {};
 };
 

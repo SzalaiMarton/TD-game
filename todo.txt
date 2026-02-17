@@ -1,4 +1,4 @@
-
+bullets dont die, and dont collide
 
 ingame ui
 inventory

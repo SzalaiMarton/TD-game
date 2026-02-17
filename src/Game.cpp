@@ -15,6 +15,7 @@ uint16_t Game::money{};
 Layer* Game::currentLayer{};
 std::queue<std::pair<uint8_t, TargetType>> Game::waitingTargets{};
 std::vector<CatType> Game::selectedCats{};
+std::vector<TargetType> Game::availableTargets{};
 
 Game::Game() {
 	this->config = GameConfig();
@@ -23,12 +24,12 @@ Game::Game() {
 void Game::init() {
 	Assets::loadFonts(Assets::fontsPath);
 	Assets::loadTextures(Assets::texturesPath);
-	Renderer::init((WindowConfig*)this->config);
+	Renderer::init((WindowConfig*)config);
 
-	this->initLayers();
-	this->initMainMenu();
-	this->initInventory();
-	this->initInGame();
+	initLayers();
+	initMainMenu();
+	initInventory();
+	initInGame();
 	Game::currentLayer = Renderer::getLayer(MainLayerName::MAINMENU);
 }
 
@@ -41,7 +42,7 @@ void Game::run() {
 			}
 
 			if (event->is<sf::Event::MouseButtonPressed>()) {
-				this->handleClick();
+				handleClick();
 				if (Game::shuttingdown) {
 					break;
 				}
@@ -52,7 +53,7 @@ void Game::run() {
 			}
 
 			if (event->is<sf::Event::MouseMoved>()) {
-				this->handleHover();
+				handleHover();
 			}
 		}
 
@@ -64,8 +65,8 @@ void Game::run() {
 		//Renderer::getCurrentLayer()->root->draw(Renderer::getCurrentLayer());
 		//debug
 
-		this->handleDrag();
-		this->update();
+		handleDrag();
+		update();
 		Renderer::refreshFrame();
 	}
 }
@@ -94,11 +95,11 @@ void Game::shutdown() {
 }
 
 void Game::update() {
-	switch (this->currentState) {
+	switch (currentState) {
 	case GameState::MAINMENU:
 		break;
 	case GameState::INGAME:
-		this->handleInGame();
+		handleInGame();
 		break;
 	}
 }
@@ -109,7 +110,7 @@ void Game::handleClick() {
 	Game::clickedShape = Renderer::getCurrentLayer()->root->getClicked(mP);
 	
 	//debug
-	LOG(mP.x << " " << mP.y);
+	//LOG(mP.x << " " << mP.y);
 	//debug
 
 	//debug
@@ -180,7 +181,7 @@ void Game::handleHover() {
 
 void Game::handleInGame() {
 	if (!Game::currentGroup) {
-		this->initGroup();
+		initGroup();
 	}
 
 	if (Game::timeWaited >= Game::currentWaitTime) {
@@ -211,15 +212,15 @@ void Game::initMainMenu() {
 	auto layer = Renderer::getLayer(MainLayerName::MAINMENU);
 
 	auto obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, 100.f, 200.f, 100.f, Assets::getTexture("default_texture.png"), "Play")));
-	obj->addClickHanlder([this]() { this->switchLayer(Game::currentState, GameState::INGAME); });
+	obj->addClickHanlder([]() { switchLayer(Game::currentState, GameState::INGAME); });
 	obj->attributes.getComponent<MIC>()->disableDrag();
 
 	obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, 280.f, 200.f, 100.f, Assets::getTexture("default_texture.png"), "Inventory")));
-	obj->addClickHanlder([this]() { this->switchLayer(Game::currentState, GameState::INVENTORY); });
+	obj->addClickHanlder([]() { switchLayer(Game::currentState, GameState::INVENTORY); });
 	obj->attributes.getComponent<MIC>()->disableDrag();
 
 	obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, (float)Renderer::getWindow()->getSize().y - 120.f, 200.f, 100.f, Assets::getTexture("default_texture.png"), "Exit")));
-	obj->addClickHanlder([this]() { this->shutdown(); });
+	obj->addClickHanlder([]() { shutdown(); });
 	obj->attributes.getComponent<MIC>()->disableDrag();
 }
 
@@ -254,13 +255,13 @@ void Game::initInventory() {
 	float gap = 450;
 	auto layer = Renderer::getLayer(MainLayerName::INVENTORY);
 
-	for (auto& e : this->config.availableCats) {
+	for (auto& e : config.availableCats) {
 		layer->addShape(new InvetoryCard(startingX + (gap * idx), startingY, 300.f, (float)Renderer::getWindow()->getSize().y - 200.f, e));
 		idx++;
 	}
 
 	auto backButton = dynamic_cast<Button*>(layer->addShape(new Button(100, 500, 200, 100, Assets::getTexture("default_texture.png"), "Back")));
-	backButton->addClickHanlder([this]() {this->switchLayer(Game::currentState, GameState::MAINMENU); });
+	backButton->addClickHanlder([]() {switchLayer(Game::currentState, GameState::MAINMENU); });
 	backButton->attributes.getComponent<MIC>()->disableDrag();
 }
 
@@ -269,12 +270,14 @@ void Game::initInGame() {
 	Game::selectedCats = {CatType::ORANGE, CatType::BLACKGREY, CatType::ORANGE};
 
 	Game::currentMap = dynamic_cast<BaseMap*>(layer->addShape(new BaseMap(0.f, 0.f, 1.f, 1.f , Assets::getTexture("place_holder_map.png"), MapType::PLACEHOLDER), true));
-	layer->addShape(new InGameCardDesk(0, 600, 1100, 100, layer), true);
+	
+	layer->addShape(new InGameCatCardDesk(0, 600, 1100, 100, layer), true);
+	layer->addShape(new InGameTargetCardDesk(1000, 0, 100, 800, layer), true);
 
 	Game::queueTarget(10, TargetType::BASIC);
 
 	auto backButton = dynamic_cast<Button*>(layer->addShape(new Button(100, 500, 200, 100, Assets::getTexture("default_texture.png"), "Back")));
-	backButton->addClickHanlder([this]() {this->switchLayer(Game::currentState, GameState::MAINMENU); });
+	backButton->addClickHanlder([]() {switchLayer(Game::currentState, GameState::MAINMENU); });
 	backButton->attributes.getComponent<MIC>()->disableDrag();
 }
 

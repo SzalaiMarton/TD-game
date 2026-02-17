@@ -87,6 +87,24 @@ void Target::spawn(Layer* layer) {
 	layer->addShape(this);
 }
 
+constexpr uint16_t getPriceByType(TargetType type) {
+	switch (type) {
+	case TargetType::BASIC:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+constexpr uint8_t getAmountByType(TargetType type) {
+	switch (type) {
+	case TargetType::BASIC:
+		return 10;
+	default:
+		return 0;
+	}
+}
+
 TargetStats* createTargetStats(TargetType type) {
 	switch (type) {
 	case TargetType::BASIC:

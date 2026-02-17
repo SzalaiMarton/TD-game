@@ -2,6 +2,9 @@
 
 class TargetGroup;
 
+constexpr uint16_t getPriceByType(TargetType type);
+constexpr uint8_t getAmountByType(TargetType type);
+
 struct TargetStats {
 	uint32_t health{};
 	uint8_t speed{};

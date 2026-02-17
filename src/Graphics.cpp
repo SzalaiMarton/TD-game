@@ -15,6 +15,8 @@ void Renderer::init(WindowConfig* config = nullptr) {
 	else {
 		throw std::exception();
 	}
+
+	Game::availableTargets = {TargetType::BASIC};
 }
 
 sf::RenderWindow* Renderer::getWindow() {
