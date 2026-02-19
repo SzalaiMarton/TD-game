@@ -3,39 +3,34 @@
 BaseBullet::BaseBullet(float xPos, float yPos, float xSize, float ySize, const sf::Vector2f& directionVector, BulletType type, BaseCat* parent)
 	: BaseShape(xPos, yPos, xSize, ySize, Assets::getTexture("default_texture.png")) {
 	auto package = createBullet(type);
-	this->attributes.getComponent<SpriteComponent>()->sprite->setTexture(*package.first);
+	this->getSC()->sprite->setTexture(*package.first);
 	this->stats = package.second;
 	this->stats->directionVector = directionVector;
 	this->parent = parent;
-	Renderer::getCurrentLayer()->addShape(this);
 }
 
 BaseBullet::~BaseBullet() {
 	delete this->stats;
 }
 
-bool BaseBullet::onUpdate() {
+void BaseBullet::onUpdate() {
 	this->move();
-	if (this->isOutOfScreen()) {
-		this->~BaseBullet();
-		return true;
-	}
-	if (this->checkCollision()) {
-		LOG("collision");
-		return true;
-	}
 	this->updateTree();
-	return false;
+	if (this->isOutOfScreen() || (this->checkCollision() && this->stats->penetration == 0)) {
+		this->onDeath();
+	}
+}
+
+void BaseBullet::onDeath() {
+	Game::toBeDeletedShapes.push(this);
 }
 
 void BaseBullet::onCollision(Target* target) {
 	target->takeDmg(this->stats->dmg);
-	this->parent->deleteBullet(this);
-	this->~BaseBullet();
+	this->stats->penetration = this->stats->penetration > 0 ? this->stats->penetration - 1 : 0;
 }
 
 bool BaseBullet::checkCollision() {
-	LOG(this->treeNodes.size());
 	for (auto& e : this->treeNodes) {
 		for (auto& obj : e->elements) {
 			if (this->isColliding(dynamic_cast<Target*>(obj))) {
@@ -52,20 +47,20 @@ bool BaseBullet::isColliding(Target* target) {
 		return false;
 	}
 
-	auto pos = this->attributes.getComponent<SpriteComponent>()->getPos();
-	auto bound = this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
-	auto targetPos = target->attributes.getComponent<SpriteComponent>()->getPos();
-	auto targetBound = target->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
+	auto pos = this->getSC()->getPos();
+	auto bound = pos + this->getSC()->sprite->getGlobalBounds().size;
+	auto targetPos = target->getSC()->getPos();
+	auto targetBound = targetPos + target->getSC()->sprite->getGlobalBounds().size;
 
 	return !(pos.x > targetBound.x || pos.y > targetBound.y || bound.x < targetPos.x || bound.y < targetPos.y);
 }
 
 void BaseBullet::move() {
-	this->attributes.getComponent<SpriteComponent>()->sprite->move(this->stats->directionVector * (float)this->stats->speed);
+	this->getSC()->sprite->move(this->stats->directionVector * (float)this->stats->speed);
 }
 
 void BaseBullet::draw(sf::RenderWindow* window) {
-	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
+	window->draw(*this->getSC()->sprite);
 }
 
 std::pair<sf::Texture*, BulletStat*> createBullet(BulletType type) {

@@ -61,13 +61,15 @@ void Renderer::refreshFrame() {
 	for (auto& layer : layers) {
 		if (!layer.second->getIsHidden()) {
 			for (auto& s : *layer.second->getShapes()) {
-				// debug
-				//if (dynamic_cast<Square*>(s)) {
-				//	s->draw(window);
-				//	continue;
-				//}
-				// debug 
-				if (s && s->attributes.hasComponent<SpriteComponent>() && Game::beingDraggedShape != s) {
+
+				#if DEBUG_TREE == 1
+				if (dynamic_cast<Square*>(s)) {
+					s->draw(window);
+					continue;
+				}
+				#endif
+
+				if (s && s->attributes->hasComponent<SpriteComponent>() && Game::beingDraggedShape != s) {
 					s->draw(window);
 				}
 			}

@@ -13,6 +13,7 @@ struct GameConfig {
 	// default values are the default configs for the game
 	WindowConfig windowConfig{60, 1100, 700, "TD game"};
 	std::vector<CatType> availableCats{};
+	uint8_t validPlacementOffset{10};
 
 	GameConfig();
 
@@ -29,6 +30,7 @@ public:
 	static std::queue<std::pair<uint8_t, TargetType>> waitingTargets;
 	static std::vector<CatType> selectedCats;
 	static std::vector<TargetType> availableTargets;
+	static std::queue<BaseShape*> toBeDeletedShapes;
 	static TargetGroup* currentGroup;
 	static BaseShape* beingDraggedShape;
 	static BaseShape* clickedShape;
@@ -41,6 +43,7 @@ public:
 	static uint16_t timeWaited;
 	static uint16_t money;
 	static bool wasHolding;
+	static bool placingEffectPlayed;
 
 	Game();
 
@@ -60,6 +63,8 @@ public:
 	static void initInventory();
 	static void initInGame();
 
+	static void isPlacementValid(BaseCat* shape);
+	
 	static void switchLayer(GameState from, GameState to);
 	static void queueTarget(uint8_t amount, TargetType type);
 	static void initGroup();

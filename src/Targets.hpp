@@ -24,7 +24,7 @@ public:
 	Target(TargetType type);
 	~Target();
 
-	bool onUpdate() override;
+	void onUpdate() override;
 	void draw(sf::RenderWindow* window) override;
 
 	void onDeath();

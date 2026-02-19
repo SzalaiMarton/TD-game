@@ -12,7 +12,7 @@ extern void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos, fl
 
 
 struct BaseShape {
-	Attribute attributes{};
+	Attribute* attributes{};
 	bool isHidden{false};
 	std::set<QuadTree*> treeNodes{};
 	Layer* parentLayer{};
@@ -26,9 +26,11 @@ struct BaseShape {
 	~BaseShape();
 
 	virtual void draw(sf::RenderWindow* window) = 0;
-	virtual bool onUpdate() = 0;
+	virtual void onUpdate() = 0;
 	virtual bool isOutOfScreen();
 
+	SpriteComponent* getSC();
+	MIC* getMIC();
 	void showShape();
 	void hideShape();
 	void detachFromEveryTree();
@@ -41,7 +43,7 @@ struct Shape : public BaseShape {
 	Shape(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture) : BaseShape(xPos, yPos, xSize, ySize, texture) {}
 	Shape(const sf::Vector2f& pos, const sf::Vector2f& size, sf::Texture* texture) : BaseShape(pos, size, texture) {}
 	void draw(sf::RenderWindow* window) override;
-	bool onUpdate() override { return false; }
+	void onUpdate() override {  }
 };
 
 struct Button : public BaseShape {
@@ -52,7 +54,7 @@ struct Button : public BaseShape {
 	Button(const sf::Vector2f& pos, const sf::Vector2f& size, sf::Texture* texture, const std::string& text);
 	~Button();
 
-	bool onUpdate() override { return false; }
+	void onUpdate() override {  }
 
 	void addClickHanlder(std::function<void()> handler);
 	void draw(sf::RenderWindow* window) override;
@@ -69,7 +71,7 @@ struct InvetoryCard : public BaseShape {
 	InvetoryCard(const sf::Vector2f& pos, const sf::Vector2f& size, CatType catType);
 	~InvetoryCard();
 
-	bool onUpdate() override { return false; }
+	void onUpdate() override {  }
 
 	void draw(sf::RenderWindow* window) override;
 	void initClass(CatType catType);
@@ -82,7 +84,7 @@ struct Square : public BaseShape {
 	Square(float xPos, float yPos, float xSize, float ySize);
 	~Square();
 
-	bool onUpdate() override { return false; }
+	void onUpdate() override {  }
 
 	void draw(sf::RenderWindow* window) override;
 };

@@ -8,8 +8,6 @@ struct ObjectComponent {
 	virtual ObjectComponent* copy() const = 0;
 };
 
-
-
 struct MouseInteractionComponent : public ObjectComponent {
 	struct SingleHandler {
 		HandlerType type;
@@ -29,6 +27,7 @@ struct MouseInteractionComponent : public ObjectComponent {
 	MouseInteractionComponent(std::initializer_list<SingleHandler> handlers);
 	MouseInteractionComponent(const MouseInteractionComponent& original);
 	MouseInteractionComponent* copy() const override;
+	~MouseInteractionComponent() = default;
 
 	void bindClickHandler(std::function<void()> onC);
 	void bindHoverHandler(std::function<void()> onH);
@@ -57,6 +56,7 @@ struct MouseInteractionComponent : public ObjectComponent {
 using MIC = MouseInteractionComponent;
 
 struct SpriteComponent : public ObjectComponent {
+	sf::Texture* texture{};
 	sf::Sprite* sprite{};
 	sf::Vector2f originalTextureSize{};
 
@@ -95,7 +95,8 @@ private:
 public:
 	Attribute() {}
 	Attribute(const Attribute& original);
-	
+	~Attribute();
+
 	void overrideComponents(const std::unordered_map<std::type_index, ObjectComponent*>& components);
 
 	template<typename T>

@@ -17,17 +17,53 @@ OrangeCat::OrangeCat(float xPos, float yPos, float xSize, float ySize) : BaseCat
 	this->initClass();
 }
 
+void OrangeCat::checkForFire() {
+	this->cooldown += 1;
+	if (this->cooldown < this->stats.firerate) {
+		return;
+	}
+
+	size_t i{};
+	auto& shapes = Game::currentLayer->shapes;
+	auto fired = false;
+	while (i < shapes.size()) {
+		auto obj = dynamic_cast<Target*>(shapes[i]);
+		if (!obj) {
+			i += 1;
+			continue;
+		}
+
+		if (this->cooldown >= this->stats.firerate && this->inRange(obj) && this != Game::beingDraggedShape) { // inRange checks for nullptr
+			this->rotate(obj);
+			this->fire(obj);
+			fired = true;
+			continue;
+		}
+
+		i += 1;
+	}
+
+	if (fired) {
+		this->cooldown = 0;
+	}
+}
+
+void OrangeCat::fire(Target* target) {
+	target->takeDmg(this->stats.meleeDmg);
+}
+
 void OrangeCat::initClass() {
 	this->stats.firerate = 100;
-	this->stats.range = 50;
+	this->stats.range = 100;
+	this->stats.meleeDmg = 10;
 	this->stats.cost = getPriceByType(CatType::ORANGE);
 	this->cooldown = this->stats.firerate;
 	this->range = new sf::CircleShape(this->stats.range);
 	this->range->setFillColor(sf::Color(0, 0, 0, 128));
 	this->range->setOrigin(this->range->getGeometricCenter());
-	this->range->setPosition(this->attributes.getComponent<SpriteComponent>()->sprite->getPosition());
-	this->attributes.getComponent<MIC>()->disableClick();
-	this->attributes.getComponent<MIC>()->disableHover();
+	this->range->setPosition(this->getSC()->sprite->getPosition());
+	this->attributes->getComponent<MIC>()->disableClick();
+	this->attributes->getComponent<MIC>()->disableHover();
 }
 
 void BlackGreyCat::initClass() {
@@ -38,28 +74,27 @@ void BlackGreyCat::initClass() {
 	this->range = new sf::CircleShape(this->stats.range);
 	this->range->setFillColor(sf::Color(0,0,0,128));
 	this->range->setOrigin(this->range->getGeometricCenter());
-	this->range->setPosition(this->attributes.getComponent<SpriteComponent>()->sprite->getPosition());
-	this->attributes.getComponent<MIC>()->disableClick();
-	this->attributes.getComponent<MIC>()->disableHover();
+	this->range->setPosition(this->getSC()->sprite->getPosition());
+	this->attributes->getComponent<MIC>()->disableClick();
+	this->attributes->getComponent<MIC>()->disableHover();
 }
 
-bool BaseCat::onUpdate() {
+void BaseCat::onUpdate() {
 	if (!isDisabled) {
-		return this->checkForFire();
+		this->checkForFire();
 	}
-	return false;
 }
 
 void BaseCat::fire(Target* target) {
-	auto pos = this->attributes.getComponent<SpriteComponent>()->getPos();
-	auto direction = target->attributes.getComponent<SpriteComponent>()->getPos() - pos;
+	auto pos = this->getSC()->getPos();
+	auto direction = target->getSC()->getPos() - pos;
 	direction /= (float)sqrt(pow(direction.x, 2) + pow(direction.y, 2));
 
-	this->bullets.push_back(new BaseBullet(pos.x, pos.y, 20, 20, direction, BulletType::BASIC, this));
+	this->bullets.push_back(dynamic_cast<BaseBullet*>(Game::currentLayer->addShape(new BaseBullet(pos.x, pos.y, 20, 20, direction, BulletType::BASIC, this))));
 }
 
 void BaseCat::onDrag() {
-	this->range->setPosition(this->attributes.getComponent<SpriteComponent>()->sprite->getPosition());
+	this->range->setPosition(this->getSC()->sprite->getPosition());
 }
 
 void BaseCat::onClick() {
@@ -70,15 +105,14 @@ void BaseCat::onClickLoss() {
 	this->hideRange();
 }
 
-bool BaseCat::checkForFire() {
+void BaseCat::checkForFire() {
 	this->cooldown += 1;
 	if (this->cooldown < this->stats.firerate) {
-		return false;
+		return;
 	}
 
 	size_t i{};
 	auto& shapes = Game::currentLayer->shapes;
-	auto res = false;
 	while (i < shapes.size()) {
 		auto obj = dynamic_cast<Target*>(shapes[i]);
 		if (!obj) {
@@ -90,13 +124,11 @@ bool BaseCat::checkForFire() {
 			this->cooldown = 0;
 			this->rotate(obj);
 			this->fire(obj);
-			res = true;
 			continue;
 		}
 
 		i += 1;
 	}
-	return res;
 }
 
 bool BaseCat::inRange(Target* target) {
@@ -104,7 +136,7 @@ bool BaseCat::inRange(Target* target) {
 		return false;
 	}
 
-	auto d = target->attributes.getComponent<SpriteComponent>()->sprite->getPosition() - this->attributes.getComponent<SpriteComponent>()->sprite->getPosition();
+	auto d = target->getSC()->sprite->getPosition() - this->getSC()->sprite->getPosition();
 	auto distance = sqrt(pow(d.x, 2) + pow(d.y, 2));
 	return distance < this->stats.range;
 }
@@ -129,14 +161,14 @@ void BaseCat::rotate(Target* target) {
 		return;
 	}
 
-	auto pos = this->attributes.getComponent<SpriteComponent>()->getPos();
-	auto targetPos = target->attributes.getComponent<SpriteComponent>()->getPos();
+	auto pos = this->getSC()->getPos();
+	auto targetPos = target->getSC()->getPos();
 	auto direction = targetPos - pos;
-	this->attributes.getComponent<SpriteComponent>()->sprite->setRotation(sf::degrees(atan2(direction.y, direction.x) * (180 / pi) - 90.f));
+	this->getSC()->sprite->setRotation(sf::degrees(atan2(direction.y, direction.x) * (180 / pi) - 90.f));
 }
 
 void BaseCat::draw(sf::RenderWindow* window) {
-	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
+	window->draw(*this->getSC()->sprite);
 	if (this->range && !this->rangeHidden) {
 		window->draw(*this->range);
 	}
@@ -149,8 +181,8 @@ void BaseCat::initClass() {
 		MIC::SingleHandler(HandlerType::CLICKLOSSHANDLER, [this]() { this->onClickLoss(); })
 	};
 
-	this->attributes.addComponent<MIC>(new MIC(handlers));
-	this->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size.x / 2, this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size.y / 2 });
+	this->attributes->addComponent<MIC>(new MIC(handlers));
+	this->getSC()->sprite->setOrigin({ this->getSC()->sprite->getLocalBounds().size.x / 2, this->getSC()->sprite->getLocalBounds().size.y / 2 });
 }
 
 void BaseCat::showRange() {
@@ -159,6 +191,27 @@ void BaseCat::showRange() {
 
 void BaseCat::hideRange() {
 	this->rangeHidden = true;
+}
+
+void BaseCat::enablePlace() {
+	this->canBePlaced = true;
+	this->range->setFillColor(sf::Color(0, 0, 0, 128));
+}
+
+void BaseCat::disablePlace() {
+	this->canBePlaced = false;
+	this->range->setFillColor(sf::Color(255, 0, 0, 128));
+}
+
+void BaseCat::place() {
+	if (this->canBePlaced) {
+		this->updateTree();
+		this->enableCat();
+		this->hideRange();
+	}
+	else {
+		this->~BaseCat();
+	}
 }
 
 BaseCat::BaseCat() : BaseShape(0, 0, 64, 64, Assets::getTexture("default_texture.png")) {
@@ -185,9 +238,6 @@ constexpr uint16_t getPriceByType(CatType type) {
 }
 
 void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos, float xSize, float ySize) {
-	if (bindTo) {
-		return;
-	}
 	auto layer = Game::currentLayer;
 	switch (type) {
 	case CatType::BLACKGREY:
@@ -200,5 +250,5 @@ void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos, float xSi
 		bindTo = new BlackGreyCat(xPos, yPos, xSize, ySize);
 		break;
 	}
-	layer->addShape(bindTo);
+	layer->addShape(bindTo, true);
 }

@@ -19,11 +19,6 @@ AttributeBuilder& AttributeBuilder::withMouseInteraction(std::initializer_list<M
 Attribute* AttributeBuilder::build() const {
 	auto resObject = new Attribute();
 	resObject->overrideComponents(this->components);
-
-	if (resObject->hasComponent<SpriteComponent>() && resObject->hasComponent<MIC>()) {
-		resObject->getComponent<SpriteComponent>()->sprite->setOrigin({ resObject->getComponent<SpriteComponent>()->sprite->getLocalBounds().size.x / 2, resObject->getComponent<SpriteComponent>()->sprite->getLocalBounds().size.y / 2 });
-	}
-	
 	return resObject;
 }
 
@@ -34,16 +29,20 @@ SpriteComponent::SpriteComponent(sf::Texture* texture) {
 	}
 	this->sprite = new sf::Sprite(*texture);
 	this->originalTextureSize = (sf::Vector2f)texture->getSize();
+	this->texture = texture;
 }
 
 SpriteComponent::SpriteComponent(const SpriteComponent& original) {
 	this->sprite = new sf::Sprite(original.sprite->getTexture());
 	this->originalTextureSize = original.originalTextureSize;
+	this->texture = original.texture;
 }
 
 SpriteComponent::~SpriteComponent() {
 	delete sprite;
 	sprite = nullptr;
+	delete texture;
+	texture = nullptr;
 }
 
 SpriteComponent* SpriteComponent::copy() const {
@@ -84,6 +83,12 @@ sf::Vector2f SpriteComponent::getPos() const {
 
 Attribute::Attribute(const Attribute& original) {
 	this->overrideComponents(original.components);
+}
+
+Attribute::~Attribute() {
+	for (auto& e : components) {
+		delete e.second;
+	}
 }
 
 void Attribute::overrideComponents(const std::unordered_map<std::type_index, ObjectComponent*>& components) {
@@ -204,7 +209,7 @@ void MIC::onDrag(const sf::Vector2i& pMouse, BaseShape* shape) const {
 	if (this->handlers.find(HandlerType::DRAGHANDLER) != this->handlers.end() && this->isDraggable) {
 		this->handlers.at(HandlerType::DRAGHANDLER)();
 		if (isBaseDrag) {
-			shape->attributes.getComponent<SpriteComponent>()->sprite->setPosition({ (float)pMouse.x ,(float)pMouse.y });
+			shape->getSC()->sprite->setPosition({ (float)pMouse.x ,(float)pMouse.y });
 		}
 	}
 }

@@ -30,7 +30,8 @@ enum class GameState {
 };
 
 enum class MapType {
-	PLACEHOLDER
+	PLACEHOLDER,
+	ROADMAP
 };
 
 enum class MainLayerName {
@@ -58,10 +59,34 @@ enum class BulletType {
 	BASIC,
 };
 
-constexpr std::string mapTypeToFileName(MapType type) {
+constexpr std::string mapTypeToPathName(MapType type) {
 	switch (type) {
 	case MapType::PLACEHOLDER:
 		return "place_holder_map.txt";
+	case MapType::ROADMAP:
+		return "place_holder_map.txt";
+	default:
+		return "none";
+	}
+}
+
+constexpr std::string mapTypeToTextureName(MapType type) {
+	switch (type) {
+	case MapType::PLACEHOLDER:
+		return "place_holder_map.png";
+	case MapType::ROADMAP:
+		return "road_map.png";
+	default:
+		return "none";
+	}
+}
+
+constexpr std::string mapTypeToMaskName(MapType type) {
+	switch (type) {
+	case MapType::PLACEHOLDER:
+		return "place_holder_map.png";
+	case MapType::ROADMAP:
+		return "road_mask.png";
 	default:
 		return "none";
 	}

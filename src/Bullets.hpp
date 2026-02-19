@@ -21,7 +21,8 @@ public:
 	BaseBullet(float xPos, float yPos, float xSize, float ySize, const sf::Vector2f& directionVector, BulletType type, BaseCat* parent);
 	~BaseBullet();
 
-	bool onUpdate() override;
+	void onUpdate() override;
+	void onDeath();
 	void draw(sf::RenderWindow* window) override;
 
 	void onCollision(Target* target);

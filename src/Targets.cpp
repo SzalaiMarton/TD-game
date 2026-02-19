@@ -2,32 +2,34 @@
 
 Target::Target(TargetType type) : BaseShape(0.f, 0.f, 0.f, 0.f, Assets::getTexture("default_texture.png")) {
 	this->stats = createTargetStats(type);
-	this->attributes.getComponent<SpriteComponent>()->setSize(this->stats->size);
+	this->getSC()->setSize(this->stats->size);
 
-	auto s = this->attributes.getComponent<SpriteComponent>()->sprite->getLocalBounds().size;
-	this->attributes.getComponent<SpriteComponent>()->sprite->setOrigin({ s.x / 2, s.y / 2 });
+	auto s = this->getSC()->sprite->getLocalBounds().size;
+	this->getSC()->sprite->setOrigin({ s.x / 2, s.y / 2 });
 }
 
 Target::~Target() {
 	delete this->stats;
 }
 
-bool Target::onUpdate() {
+void Target::onUpdate() {
 	if (this->isSpawned) {
 		if (this->stats->health <= 0) {
-			if (this->die()) {
-				return true;
-			}
+			this->die();
 		}
 		this->move();
+		if (this->path.size() == 0) {
+			this->onDeath();
+			return;
+		}
 		this->updateTree();
 	}
-	return false;
 }
 
 void Target::onDeath() {
 	Renderer::getLayer(MainLayerName::INGAME)->removeShape(this);
 	this->detachFromEveryTree();
+	Game::toBeDeletedShapes.push(this);
 }
 
 bool Target::die() {
@@ -55,7 +57,7 @@ void Target::retrievePath() {
 
 void Target::draw(sf::RenderWindow* window) {
 	if (this->isSpawned) {
-		window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
+		window->draw(*this->getSC()->sprite);
 	}
 }
 
@@ -65,7 +67,7 @@ void Target::move() {
 		return;
 	}
 
-	auto self = this->attributes.getComponent<SpriteComponent>()->sprite;
+	auto self = this->getSC()->sprite;
 	auto& targetPos = this->path.front();
 	sf::Vector2f pos = self->getPosition();
 	sf::Vector2f direction = targetPos - pos;
@@ -83,7 +85,7 @@ void Target::move() {
 void Target::spawn(Layer* layer) {
 	this->isSpawned = true;
 	this->retrievePath();
-	this->attributes.getComponent<SpriteComponent>()->sprite->setPosition({ this->path.front().x, this->path.front().y});
+	this->getSC()->sprite->setPosition({ this->path.front().x, this->path.front().y});
 	layer->addShape(this);
 }
 

@@ -14,6 +14,7 @@ struct CatStat {
 	uint16_t firerate{};
 	uint16_t cost{};
 	uint8_t range{};
+	uint16_t meleeDmg{};
 
 	CatStat() {};
 };
@@ -26,6 +27,7 @@ protected:
 	std::vector<BaseBullet*> bullets{};
 	uint16_t cooldown{};
 	bool isDisabled{true};
+	bool canBePlaced{ true };
 
 public:
 	BaseCat();
@@ -33,7 +35,8 @@ public:
 	~BaseCat();
 
 	virtual void fire(Target* target);
-	virtual bool onUpdate();
+	virtual void onUpdate();
+	virtual void checkForFire();
 
 	void onDrag();
 	void onClick();
@@ -44,8 +47,11 @@ public:
 	void disableCat();
 	void showRange();
 	void hideRange();
+	void enablePlace();
+	void disablePlace();
 
-	bool checkForFire();
+	void place();
+
 	bool inRange(Target* target);
 	void rotate(Target* target);
 	void draw(sf::RenderWindow* window) override;
@@ -65,6 +71,9 @@ class OrangeCat : public BaseCat {
 public:
 	OrangeCat();
 	OrangeCat(float xPos, float yPos, float xSize, float ySize);
+
+	void checkForFire() override;
+	void fire(Target* target) override;
 
 	void initClass();
 };

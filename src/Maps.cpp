@@ -1,43 +1,119 @@
 #include "stdafx.hpp"
 
-BaseMap::BaseMap(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture, MapType type) : BaseShape(xPos, yPos, xSize, ySize, texture) {
+BaseMap::BaseMap(float xPos, float yPos, float xSize, float ySize, MapType type) : BaseShape(xPos, yPos, xSize, ySize, Assets::getTexture(mapTypeToTextureName(type))) {
 	this->initClass(type);
 }
 
-BaseMap::BaseMap(const sf::Vector2f& pos, const sf::Vector2f& size, sf::Texture* texture, MapType type) : BaseShape(pos, size, texture) {
+BaseMap::BaseMap(const sf::Vector2f& pos, const sf::Vector2f& size, MapType type) : BaseShape(pos, size, Assets::getTexture(mapTypeToTextureName(type))) {
 	this->initClass(type);
 }
 
 void BaseMap::draw(sf::RenderWindow* window) {
-	window->draw(*this->attributes.getComponent<SpriteComponent>()->sprite);
+	window->draw(*this->getSC()->sprite);
+	window->draw(*this->maskShape->getSC()->sprite);
 }
 
 void BaseMap::initClass(MapType type) {
-	auto package = parseMapPath(type);
-	this->attributes.getComponent<SpriteComponent>()->setSize(package.first);
-	this->path = package.second;
+	auto package = parseMapProperties(type);
+	this->getSC()->setSize(package.mapSize);
+	this->path = package.path;
+	this->maskMap = Assets::getMapMask(type);
+	this->maskShape = new Shape(0.f,0.f, package.mapSize.x, package.mapSize.y, new sf::Texture(*this->maskMap));
+	this->maskShape->getSC()->sprite->setColor(sf::Color(255,255,255,0));
+	this->mapSize = package.mapSize;
+	this->validPlacementColor = package.validColor;
+	this->invalidPlacementColor = package.invalidColor;
 }
 
-std::pair<sf::Vector2f, std::queue<sf::Vector2f>> parseMapPath(MapType type) {
-	std::ifstream file(mapPathLocation + mapTypeToFileName(type));
+MapConfig parseMapProperties(MapType type) {
+	std::ifstream file(mapPathLocation + mapTypeToPathName(type));
 
 	if (!file.is_open()) {
 		ERROR("parseMapPath", "Could not open file.");
-		return { { 0.f,0.f },{} };
+		return MapConfig();
 	}
 
-	std::queue<sf::Vector2f> res{};
-	std::string line;
+	auto res = MapConfig();
 
-	std::getline(file, line);
-	auto spaceIdx = line.find(" ", 1);
-	sf::Vector2f originalSize = { (float)std::stoi(line.substr(0, spaceIdx)) , (float)std::stoi(line.substr(spaceIdx, line.size() - spaceIdx)) };
-
-	while (std::getline(file, line)) {
-		spaceIdx = line.find(" ", 1);
-		float x = (float)std::stoi(line.substr(0, spaceIdx));
-		float y = (float)std::stoi(line.substr(spaceIdx, line.size() - spaceIdx));
-		res.push({ x, y });
+	std::string line{};
+	while (getline(file, line)) {
+		if (line == "size") {
+			res.mapSize = parseSize(file);
+		}
+		else if (line == "validColor") {
+			res.validColor = parseValidColor(file);
+		}
+		else if (line == "invalidColor") {
+			res.invalidColor = parseInvalidColor(file);
+		}
+		else if (line == "path") {
+			res.path = parsePath(file);
+		}
 	}
-	return { originalSize, res };
+
+	file.close();
+
+	return res;
+}
+
+std::queue<sf::Vector2f> parsePath(std::istream& file) {
+	std::queue<sf::Vector2f> path{};
+	std::string line{};
+	while (getline(file, line) && line != terminatorChar) {
+		auto space = line.find(" ", 0);
+		float x = std::stof(line.substr(0, space));
+		float y = std::stof(line.substr(space));
+
+		path.push({ x,y });
+	}
+
+	return path;
+}
+
+sf::Vector2f parseSize(std::istream& file) {
+	sf::Vector2f res{};
+	std::string line{};
+	while (getline(file, line) && line != terminatorChar) {
+		auto space = line.find(" ", 0);
+		float x = std::stof(line.substr(0, space));
+		float y = std::stof(line.substr(space));
+
+		res = {x,y};
+	}
+
+	return res;
+}
+
+Color parseValidColor(std::istream& file) {
+	Color res{};
+	std::string line{};
+	while (getline(file, line) && line != terminatorChar) {
+		auto space = line.find(" ", 0);
+		uint8_t r = (uint8_t)std::stoi(line.substr(0, space));
+
+		auto prevSpace = space + 1;
+		space = line.find(" ", prevSpace);
+		uint8_t g = (uint8_t)std::stoi(line.substr(prevSpace, space));
+		uint8_t b = (uint8_t)std::stoi(line.substr(space));
+
+		res = { r, g, b };
+	}
+	return res;
+}
+
+Color parseInvalidColor(std::istream& file) {
+	Color res{};
+	std::string line{};
+	while (getline(file, line) && line != terminatorChar) {
+		auto space = line.find(" ", 0);
+		uint8_t r = (uint8_t)std::stoi(line.substr(0, space));
+
+		auto prevSpace = space + 1;
+		space = line.find(" ", prevSpace);
+		uint8_t g = (uint8_t)std::stoi(line.substr(prevSpace, space));
+		uint8_t b = (uint8_t)std::stoi(line.substr(space));
+
+		res = { r, g, b };
+	}
+	return res;
 }

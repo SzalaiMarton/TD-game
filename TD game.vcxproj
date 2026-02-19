@@ -168,6 +168,7 @@
     <ClInclude Include="src\AssetLoader.hpp" />
     <ClInclude Include="src\Bullets.hpp" />
     <ClInclude Include="src\Cats.hpp" />
+    <ClInclude Include="src\Color.hpp" />
     <ClInclude Include="src\Enums.hpp" />
     <ClInclude Include="src\Game.hpp" />
     <ClInclude Include="src\Graphics.hpp" />

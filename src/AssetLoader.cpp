@@ -2,8 +2,8 @@
 
 std::unordered_map<std::string, sf::Texture*> Assets::loadedTextures{};
 std::unordered_map<std::string, sf::Font*> Assets::loadedFonts{};
-std::filesystem::path Assets::texturesPath = "res//textures";
-std::filesystem::path Assets::fontsPath = "res//fonts";
+std::string Assets::texturesPath = "res//textures//";
+std::string Assets::fontsPath = "res//fonts//";
 
 void Assets::loadTextures(const std::filesystem::path& path) {
 	if (std::filesystem::exists(path)) {
@@ -52,4 +52,13 @@ sf::Texture* Assets::getTexture(const std::string& name) {
 sf::Font* Assets::getFont(const std::string& name) {
 	auto it = loadedFonts.find(name);
 	return it != loadedFonts.end() ? it->second : nullptr;
+}
+
+sf::Image* Assets::getMapMask(MapType type) {
+	auto res = new sf::Image();
+	auto path = texturesPath + mapTypeToMaskName(type);
+	if (res->loadFromFile(path)) {
+		return res;
+	}
+	return nullptr;
 }

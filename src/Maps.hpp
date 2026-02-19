@@ -1,19 +1,51 @@
 #pragma 
 
 enum class MapType;
+struct MapConfig;
 
 static std::string mapPathLocation = "res//map_paths//";
-std::pair<sf::Vector2f, std::queue<sf::Vector2f>> parseMapPath(MapType type);
+MapConfig parseMapProperties(MapType type);
+std::queue<sf::Vector2f> parsePath(std::istream& file);
+sf::Vector2f parseSize(std::istream& file);
+Color parseValidColor(std::istream& file);
+Color parseInvalidColor(std::istream& file);
+static std::string terminatorChar = "-";
+
+struct MapConfig {
+	Color invalidColor{};
+	Color validColor{};
+	sf::Vector2f mapSize{};
+	std::queue<sf::Vector2f> path{};
+
+	MapConfig() = default;
+
+	void print() {
+		LOG("size: " << mapSize.x << " " << mapSize.y);
+		LOG("validColor: " << (std::string)validColor);
+		LOG("invalidColor: " << (std::string)invalidColor);
+		LOG("path:");
+		auto temp = path;
+		while (!temp.empty()) {
+			LOG(temp.front().x << " " << temp.front().y);
+			temp.pop();
+		}
+	}
+};
 
 class BaseMap : public BaseShape {
 public:
 	std::queue<sf::Vector2f> path{};
+	sf::Image* maskMap{};
+	Shape* maskShape{};
+	sf::Color validPlacementColor{};
+	sf::Color invalidPlacementColor{};
+	sf::Vector2f mapSize{};
 
-	BaseMap(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture, MapType type);
-	BaseMap(const sf::Vector2f& pos, const sf::Vector2f& size, sf::Texture* texture, MapType type);
+	BaseMap(float xPos, float yPos, float xSize, float ySize, MapType type);
+	BaseMap(const sf::Vector2f& pos, const sf::Vector2f& size, MapType type);
 
 	void draw(sf::RenderWindow* window) override;
-	bool onUpdate() override { return false; }
+	void onUpdate() override {  }
 
 	void initClass(MapType type);
 };
