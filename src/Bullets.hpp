@@ -10,7 +10,7 @@ struct BulletStat {
 	sf::Vector2f directionVector{};
 
 	BulletStat() = default;
-	BulletStat(uint16_t dmg, uint8_t speed, uint8_t penetration) : dmg(dmg), speed(speed) {}
+	BulletStat(uint16_t dmg, uint8_t speed, uint8_t penetration) : dmg(dmg), speed(speed), penetration(penetration) {}
 };
 
 class BaseBullet : public BaseShape {
@@ -27,7 +27,7 @@ public:
 
 	void onCollision(Target* target);
 	bool isColliding(Target* target);
-	bool checkCollision();
+	void checkCollision();
 
 	void move();
 };

@@ -307,7 +307,7 @@ void InvetoryCard::draw(sf::RenderWindow* window) {
 	}
 }
 
-InGameCatCard::InGameCatCard(float xPos, float yPos, float xSize, float ySize, CatType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string(getPriceByType(type))) {
+InGameCatCard::InGameCatCard(float xPos, float yPos, float xSize, float ySize, CatType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string((int)Stats::getStatByType(type)->cost)) {
 	this->text->setPosition({ xPos, yPos + InGameCatCard::textOffset });
 	
 	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(catTypeToTextureName(type)));
@@ -319,7 +319,7 @@ InGameCatCard::InGameCatCard(float xPos, float yPos, float xSize, float ySize, C
 	this->getMIC()->disableBaseDrag();
 	this->getMIC()->bindDragHandler([this, type]() {
 			if (!this->draggedCat) {
-				createCat(this->draggedCat, type, -100.f, -100.f, 60.f, 40.f);
+				createCat(this->draggedCat, type, -100.f, -100.f);
 			}
 			Game::isPlacementValid(this->draggedCat);
 			this->draggedCat->showRange();
@@ -339,7 +339,7 @@ InGameCatCard::~InGameCatCard() {
 	draggedCat = nullptr;
 }
 
-InGameTargetCard::InGameTargetCard(float xPos, float yPos, float xSize, float ySize, TargetType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string(getPriceByType(type))) {
+InGameTargetCard::InGameTargetCard(float xPos, float yPos, float xSize, float ySize, TargetGroupType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string(getPriceByGroupType(type))) {
 	this->text->setPosition({ xPos, yPos + InGameTargetCard::textOffset });
 
 	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(targetTypeToTextureName(type)));
@@ -350,7 +350,7 @@ InGameTargetCard::InGameTargetCard(float xPos, float yPos, float xSize, float yS
 	this->getMIC()->disableBaseDrag();
 	this->getMIC()->disableDrag();
 	this->getMIC()->bindClickHandler([type]() {
-			Game::queueTarget(getAmountByType(type), type);
+			Game::queueTargetGroup(type);
 		});
 }
 
@@ -474,12 +474,12 @@ void InGameCatCardDesk::draw(sf::RenderWindow* window) {
 
 InGameTargetCardDesk::InGameTargetCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l)
 	: Shape(xPos, yPos, xSize, ySize, Assets::getTexture("default_texture.png")) {
-	this->cards.reserve(Game::availableTargets.size());
+	this->cards.reserve(Game::availableTargetGroups.size());
 	auto startingPos = this->getSC()->getPos();
 	startingPos.x += 50;
 	startingPos.y += 80;
 	int i = 0;
-	for (auto& e : Game::availableTargets) {
+	for (auto& e : Game::availableTargetGroups) {
 		this->cards.push_back(dynamic_cast<InGameTargetCard*>(l->addShape(new InGameTargetCard(startingPos.x, startingPos.y + (100 * i), 80, 80, e))));
 		i += 1;
 	}

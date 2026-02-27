@@ -27,9 +27,9 @@ struct GameConfig {
 class Game {
 public:
 	static bool shuttingdown;
-	static std::queue<std::pair<uint8_t, TargetType>> waitingTargets;
+	static std::queue<TargetGroupStats*> waitingTargets;
 	static std::vector<CatType> selectedCats;
-	static std::vector<TargetType> availableTargets;
+	static std::vector<TargetGroupType> availableTargetGroups;
 	static std::queue<BaseShape*> toBeDeletedShapes;
 	static TargetGroup* currentGroup;
 	static BaseShape* beingDraggedShape;
@@ -39,8 +39,8 @@ public:
 	static Layer* currentLayer;
 	static GameConfig config;
 	static GameState currentState;
-	static uint16_t currentWaitTime;
-	static uint16_t timeWaited;
+	static uint16_t targetSpawnDelay;
+	static uint16_t targetSpawnTimeElapsed;
 	static uint16_t money;
 	static bool wasHolding;
 	static bool placingEffectPlayed;
@@ -66,6 +66,6 @@ public:
 	static void isPlacementValid(BaseCat* shape);
 	
 	static void switchLayer(GameState from, GameState to);
-	static void queueTarget(uint8_t amount, TargetType type);
+	static void queueTargetGroup(TargetGroupType type);
 	static void initGroup();
 };

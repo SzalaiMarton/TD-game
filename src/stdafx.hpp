@@ -20,6 +20,7 @@
 #define DEBUG_TREE 0
 
 #include "Enums.hpp"
+#include "Stats.hpp"
 #include "Logger.hpp"
 #include "Color.hpp"
 #include "AssetLoader.hpp"

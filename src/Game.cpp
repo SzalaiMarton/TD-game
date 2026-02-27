@@ -10,13 +10,13 @@ BaseShape* Game::clickedShape{};
 BaseShape* Game::beingHoveredShape{};
 GameState Game::currentState = GameState::MAINMENU;
 BaseMap* Game::currentMap{};
-uint16_t Game::currentWaitTime{};
-uint16_t Game::timeWaited{};
+uint16_t Game::targetSpawnDelay{};
+uint16_t Game::targetSpawnTimeElapsed{};
 uint16_t Game::money{};
 Layer* Game::currentLayer{};
-std::queue<std::pair<uint8_t, TargetType>> Game::waitingTargets{};
+std::queue<TargetGroupStats*> Game::waitingTargets{};
 std::vector<CatType> Game::selectedCats{};
-std::vector<TargetType> Game::availableTargets{};
+std::vector<TargetGroupType> Game::availableTargetGroups{};
 std::queue<BaseShape*> Game::toBeDeletedShapes{};
 
 Game::Game() {
@@ -186,10 +186,10 @@ void Game::handleInGame() {
 		initGroup();
 	}
 
-	if (Game::timeWaited >= Game::currentWaitTime) {
+	if (Game::targetSpawnTimeElapsed >= Game::targetSpawnDelay) {
 		if (Game::currentGroup && Game::currentGroup->targets.size() > 0) {
 			Game::currentGroup->spawnNext(Game::currentLayer);
-			Game::timeWaited = 0;
+			Game::targetSpawnTimeElapsed = 0;
 		}
 		else {
 			Game::currentGroup = nullptr;
@@ -212,7 +212,7 @@ void Game::handleInGame() {
 	}
 
 	if (currentGroup) {
-		Game::timeWaited++;
+		Game::targetSpawnTimeElapsed++;
 	}
 }
 
@@ -282,8 +282,6 @@ void Game::initInGame() {
 	layer->addShape(new InGameCatCardDesk(0, 600, 1100, 100, layer), true);
 	layer->addShape(new InGameTargetCardDesk(1000, 0, 100, 800, layer), true);
 
-	Game::queueTarget(10, TargetType::BASIC);
-
 	auto backButton = dynamic_cast<Button*>(layer->addShape(new Button(100, 500, 200, 100, Assets::getTexture("default_texture.png"), "Back")));
 	backButton->addClickHanlder([]() {switchLayer(Game::currentState, GameState::MAINMENU); });
 	backButton->getMIC()->disableDrag();
@@ -332,15 +330,15 @@ void Game::switchLayer(GameState from, GameState to) {
 	Game::currentState = to;
 }
 
-void Game::queueTarget(uint8_t amount, TargetType type) {
-	waitingTargets.push({ amount, type });
+void Game::queueTargetGroup(TargetGroupType type) {
+	waitingTargets.push(getGroupStats(type));
 }
 
 void Game::initGroup() {
 	if (waitingTargets.size() > 0) {
-		auto tg = new TargetGroup(waitingTargets.front().first, waitingTargets.front().second);
+		auto tg = new TargetGroup(waitingTargets.front());
 		auto res = tg->initSpawn();
-		Game::currentWaitTime = res.first * 5;
+		Game::targetSpawnDelay = res.first * 5;
 		Game::currentGroup = res.second;
 		waitingTargets.pop();
 	}

@@ -15,8 +15,9 @@ BaseBullet::~BaseBullet() {
 
 void BaseBullet::onUpdate() {
 	this->move();
-	this->updateTree();
-	if (this->isOutOfScreen() || (this->checkCollision() && this->stats->penetration == 0)) {
+	this->updateTree(); 
+	this->checkCollision();
+	if (this->isOutOfScreen() || this->stats->penetration == 0) {
 		this->onDeath();
 	}
 }
@@ -30,16 +31,15 @@ void BaseBullet::onCollision(Target* target) {
 	this->stats->penetration = this->stats->penetration > 0 ? this->stats->penetration - 1 : 0;
 }
 
-bool BaseBullet::checkCollision() {
+void BaseBullet::checkCollision() {
 	for (auto& e : this->treeNodes) {
 		for (auto& obj : e->elements) {
 			if (this->isColliding(dynamic_cast<Target*>(obj))) {
 				this->onCollision(dynamic_cast<Target*>(obj));
-				return true;
+				return;
 			}
 		}
 	}
-	return false;
 }
 
 bool BaseBullet::isColliding(Target* target) {
@@ -72,5 +72,5 @@ std::pair<sf::Texture*, BulletStat*> createBullet(BulletType type) {
 }
 
 std::pair<sf::Texture*, BulletStat*> createBasic() {
-	return {Assets::getTexture("default_texture.png"), new BulletStat(10, 10, 2)};
+	return {Assets::getTexture("default_texture.png"), new BulletStat(10, 20, 1)};
 }

@@ -5,10 +5,10 @@ class Layer;
 struct QuadTree;
 class BaseCat;
 
-constexpr extern uint16_t getPriceByType(CatType type);
-constexpr extern uint16_t getPriceByType(TargetType type);
+//extern Stats::CatStat* Stats::getStatByType(CatType type);
+constexpr extern uint16_t getPriceByGroupType(TargetGroupType type);
 constexpr extern uint8_t getAmountByType(TargetType type);
-extern void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos, float xSize, float ySize);
+extern void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos);
 
 
 struct BaseShape {
@@ -121,7 +121,7 @@ struct InGameTargetCard : Button {
 
 	Shape* icon{};
 
-	InGameTargetCard(float xPos, float yPos, float xSize, float ySize, TargetType type);
+	InGameTargetCard(float xPos, float yPos, float xSize, float ySize, TargetGroupType type);
 	~InGameTargetCard();
 
 	void initClass(CatType type);

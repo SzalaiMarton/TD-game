@@ -4,6 +4,7 @@ namespace TextureName {
 	static std::string blackGreyCat = "black_grey.png";
 	static std::string orangeCat = "orange.png";
 	static std::string defalutTexture = "default_texture.png";
+	static std::string beaten_box = "beaten_box.png";
 	static std::string inventoryCard = "inventory_card.png";
 	static std::string placeHolderMap = "place_holder_map.png";
 	static std::string ingameCard = "ingame_card.png";
@@ -17,7 +18,12 @@ enum class CatType {
 
 enum class TargetType {
 	NONE,
-	BASIC,
+	BEATEN,
+};
+
+enum class TargetGroupType {
+	NONE,
+	BEATEN_8
 };
 
 enum class GameState {
@@ -148,9 +154,22 @@ constexpr GameState layerNameToGameState(MainLayerName layer) {
 
 constexpr std::string targetTypeToTextureName(TargetType type) {
 	switch (type) {
-	case TargetType::BASIC:
-		return TextureName::defalutTexture;
+	case TargetType::BEATEN:
+		return TextureName::beaten_box;
 	default:
 		return TextureName::defalutTexture;
 	}
+}
+
+constexpr TargetType groupToTargetType(TargetGroupType type) {
+	switch (type) {
+	case TargetGroupType::BEATEN_8:
+		return TargetType::BEATEN;
+	default:
+		return TargetType::BEATEN;
+	}
+}
+
+constexpr std::string targetTypeToTextureName(TargetGroupType type) {
+	return targetTypeToTextureName(groupToTargetType(type));
 }

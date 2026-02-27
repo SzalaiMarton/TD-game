@@ -16,7 +16,14 @@ void Renderer::init(WindowConfig* config = nullptr) {
 		throw std::exception();
 	}
 
-	Game::availableTargets = {TargetType::BASIC};
+	Game::availableTargetGroups = {
+		TargetGroupType::BASIC8, 
+		TargetGroupType::BASIC16, 
+		TargetGroupType::FAST8,
+		TargetGroupType::FAST16,
+		TargetGroupType::LAYERED8,
+		TargetGroupType::LAYERED16
+	};
 }
 
 sf::RenderWindow* Renderer::getWindow() {
