@@ -1,9 +1,7 @@
 #pragma once
 
 class TargetGroup;
-
-constexpr uint16_t getPriceByGroupType(TargetGroupType type);
-constexpr uint8_t getAmountByType(TargetType type);
+struct Stats::TargetGroupStats;
 
 class Target : public BaseShape {
 public:
@@ -33,10 +31,9 @@ public:
 	TargetType type{};
 	std::vector<Target*> targets{};
 
-	TargetGroup(TargetGroupStats* stats);
+	TargetGroup(Stats::TargetGroupStats* stats);
 
 	void spawnNext(Layer* layer);
 	std::pair<uint8_t, TargetGroup*> initSpawn();
 };
 
-TargetGroupStats* getGroupStats(TargetGroupType type);

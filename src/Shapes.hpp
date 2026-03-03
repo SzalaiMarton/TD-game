@@ -5,11 +5,7 @@ class Layer;
 struct QuadTree;
 class BaseCat;
 
-//extern Stats::CatStat* Stats::getStatByType(CatType type);
-constexpr extern uint16_t getPriceByGroupType(TargetGroupType type);
-constexpr extern uint8_t getAmountByType(TargetType type);
 extern void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos);
-
 
 struct BaseShape {
 	Attribute* attributes{};
@@ -99,7 +95,6 @@ struct InGameCatCard : Button {
 	InGameCatCard(float xPos, float yPos, float xSize, float ySize, CatType type);
 	~InGameCatCard();
 
-	void initClass(CatType type);
 	void draw(sf::RenderWindow* window) override;
 
 	static void hoverHandler(InGameCatCard* card);
@@ -124,7 +119,6 @@ struct InGameTargetCard : Button {
 	InGameTargetCard(float xPos, float yPos, float xSize, float ySize, TargetGroupType type);
 	~InGameTargetCard();
 
-	void initClass(CatType type);
 	void draw(sf::RenderWindow* window) override;
 
 	static void hoverHandler(InGameTargetCard* card);

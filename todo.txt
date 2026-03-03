@@ -6,3 +6,7 @@ pregame
 postgame
 multiplayer ?
 settings ?
+
+
+- setting origin can mess with collision checks since it sets the sprites position to the origin point instead of the top left corner.
+	- to resolve: store if the sprites origin was changed and if so, add the offset to the position when doing collision checks.

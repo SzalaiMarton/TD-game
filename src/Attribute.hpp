@@ -56,9 +56,11 @@ struct MouseInteractionComponent : public ObjectComponent {
 using MIC = MouseInteractionComponent;
 
 struct SpriteComponent : public ObjectComponent {
+	bool originChanged{ false };
+	sf::Vector2f originalOrigin{};
+	sf::Vector2f originalTextureSize{};
 	sf::Texture* texture{};
 	sf::Sprite* sprite{};
-	sf::Vector2f originalTextureSize{};
 
 	SpriteComponent(sf::Texture* texture);
 	SpriteComponent(const SpriteComponent& original);
@@ -67,8 +69,10 @@ struct SpriteComponent : public ObjectComponent {
 
 	void setSize(float x, float y);
 	void setSize(const sf::Vector2f& size);
-	void setPos(float x, float y);
-	void setPos(sf::Vector2f pos);
+	void setPos(float x, float y, bool center = false);
+	void setPos(sf::Vector2f pos, bool center = false);
+	void setOrigin(float x, float y);
+	void setOrigin(sf::Vector2f pos);
 	sf::Vector2f getPos() const;
 };
 

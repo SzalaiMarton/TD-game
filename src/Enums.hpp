@@ -1,15 +1,5 @@
 #pragma once
 
-namespace TextureName {
-	static std::string blackGreyCat = "black_grey.png";
-	static std::string orangeCat = "orange.png";
-	static std::string defalutTexture = "default_texture.png";
-	static std::string beaten_box = "beaten_box.png";
-	static std::string inventoryCard = "inventory_card.png";
-	static std::string placeHolderMap = "place_holder_map.png";
-	static std::string ingameCard = "ingame_card.png";
-}
-
 enum class CatType {
 	BLACKGREY,
 	ORANGE,
@@ -65,38 +55,11 @@ enum class BulletType {
 	BASIC,
 };
 
-constexpr std::string mapTypeToPathName(MapType type) {
-	switch (type) {
-	case MapType::PLACEHOLDER:
-		return "place_holder_map.txt";
-	case MapType::ROADMAP:
-		return "place_holder_map.txt";
-	default:
-		return "none";
-	}
-}
 
-constexpr std::string mapTypeToTextureName(MapType type) {
-	switch (type) {
-	case MapType::PLACEHOLDER:
-		return "place_holder_map.png";
-	case MapType::ROADMAP:
-		return "road_map.png";
-	default:
-		return "none";
-	}
-}
+// HELPER FUNCTIONS -----------------------------------
+// HELPER FUNCTIONS -----------------------------------
+// HELPER FUNCTIONS -----------------------------------
 
-constexpr std::string mapTypeToMaskName(MapType type) {
-	switch (type) {
-	case MapType::PLACEHOLDER:
-		return "place_holder_map.png";
-	case MapType::ROADMAP:
-		return "road_mask.png";
-	default:
-		return "none";
-	}
-}
 
 constexpr std::string catTypeToString(CatType catType) {
 	switch (catType) {
@@ -106,17 +69,6 @@ constexpr std::string catTypeToString(CatType catType) {
 		return "orange";
 	default:
 		return "none";
-	}
-}
-
-constexpr std::string catTypeToTextureName(CatType catType) {
-	switch (catType) {
-	case CatType::BLACKGREY:
-		return TextureName::blackGreyCat;
-	case CatType::ORANGE:
-		return TextureName::orangeCat;
-	default:
-		return TextureName::defalutTexture;
 	}
 }
 
@@ -152,15 +104,6 @@ constexpr GameState layerNameToGameState(MainLayerName layer) {
 	return GameState::NONE;
 }
 
-constexpr std::string targetTypeToTextureName(TargetType type) {
-	switch (type) {
-	case TargetType::BEATEN:
-		return TextureName::beaten_box;
-	default:
-		return TextureName::defalutTexture;
-	}
-}
-
 constexpr TargetType groupToTargetType(TargetGroupType type) {
 	switch (type) {
 	case TargetGroupType::BEATEN_8:
@@ -168,8 +111,4 @@ constexpr TargetType groupToTargetType(TargetGroupType type) {
 	default:
 		return TargetType::BEATEN;
 	}
-}
-
-constexpr std::string targetTypeToTextureName(TargetGroupType type) {
-	return targetTypeToTextureName(groupToTargetType(type));
 }

@@ -42,6 +42,7 @@ void MeleeCat::checkForFire() {
 }
 
 void MeleeCat::fire(Target* target) {
+	LOG("melee attack " << target);
 	target->takeDmg(this->stats->meleeDmg);
 	this->stats->meleePen = this->stats->meleePen > 0 ? this->stats->meleePen - 1 : 0;
 }
@@ -56,7 +57,7 @@ void BaseCat::fire(Target* target) {
 	auto pos = this->getSC()->getPos();
 	auto direction = target->getSC()->getPos() - pos;
 	direction /= (float)sqrt(pow(direction.x, 2) + pow(direction.y, 2));
-	this->bullets.push_back(dynamic_cast<BaseBullet*>(Game::currentLayer->addShape(new BaseBullet(pos.x, pos.y, 20, 20, direction, BulletType::BASIC, this))));
+	this->bullets.push_back(dynamic_cast<BaseBullet*>(Game::currentLayer->addShape(new BaseBullet(pos.x, pos.y, 0, 0, direction, BulletType::BASIC, this))));
 }
 
 void BaseCat::onDrag() {
@@ -195,12 +196,12 @@ void BaseCat::place() {
 	}
 }
 
-BaseCat::BaseCat() : BaseShape(0, 0, 64, 64, Assets::getTexture(catTypeToTextureName(CatType::BLACKGREY))) {
+BaseCat::BaseCat() : BaseShape(0, 0, 64, 64, Assets::getTexture(enumToTextureName(CatType::BLACKGREY))) {
 	this->initClass(CatType::BLACKGREY);
 }
 
 BaseCat::BaseCat(float xPos, float yPos, CatType type) 
-	: BaseShape(xPos, yPos, 0, 0, Assets::getTexture(catTypeToTextureName(type))) {
+	: BaseShape(xPos, yPos, 0, 0, Assets::getTexture(enumToTextureName(type))) {
 	this->initClass(type);
 }
 
@@ -210,7 +211,6 @@ BaseCat::~BaseCat() {
 }
 
 void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos) {
-	auto layer = Game::currentLayer;
 	switch (type) {
 	case CatType::BLACKGREY:
 		bindTo = new BlackGreyCat(xPos, yPos);
@@ -222,5 +222,5 @@ void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos) {
 		bindTo = new BlackGreyCat(xPos, yPos);
 		break;
 	}
-	layer->addShape(bindTo, true);
+	Game::currentLayer->addShape(bindTo, true);
 }

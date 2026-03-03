@@ -47,6 +47,8 @@ public:
 	void initClass(CatType type);
 };
 
+
+
 class RangedCat : public BaseCat {
 public:
 	RangedCat(CatType type)
@@ -67,6 +69,8 @@ public:
 	void checkForFire() override;
 	void fire(Target* target) override;
 };
+
+
 
 class BlackGreyCat : public RangedCat {
 public:

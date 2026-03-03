@@ -1,10 +1,10 @@
 #include "stdafx.hpp"
 
-BaseMap::BaseMap(float xPos, float yPos, float xSize, float ySize, MapType type) : BaseShape(xPos, yPos, xSize, ySize, Assets::getTexture(mapTypeToTextureName(type))) {
+BaseMap::BaseMap(float xPos, float yPos, float xSize, float ySize, MapType type) : BaseShape(xPos, yPos, xSize, ySize, Assets::getTexture(enumToTextureName(type))) {
 	this->initClass(type);
 }
 
-BaseMap::BaseMap(const sf::Vector2f& pos, const sf::Vector2f& size, MapType type) : BaseShape(pos, size, Assets::getTexture(mapTypeToTextureName(type))) {
+BaseMap::BaseMap(const sf::Vector2f& pos, const sf::Vector2f& size, MapType type) : BaseShape(pos, size, Assets::getTexture(enumToTextureName(type))) {
 	this->initClass(type);
 }
 
@@ -26,7 +26,7 @@ void BaseMap::initClass(MapType type) {
 }
 
 MapConfig parseMapProperties(MapType type) {
-	std::ifstream file(mapPathLocation + mapTypeToPathName(type));
+	std::ifstream file(mapPathLocation + std::string(mapTypeToPathName(type)));
 
 	if (!file.is_open()) {
 		ERROR("parseMapPath", "Could not open file.");
@@ -84,8 +84,8 @@ sf::Vector2f parseSize(std::istream& file) {
 	return res;
 }
 
-Color parseValidColor(std::istream& file) {
-	Color res{};
+sf::Color parseValidColor(std::istream& file) {
+	sf::Color res{};
 	std::string line{};
 	while (getline(file, line) && line != terminatorChar) {
 		auto space = line.find(" ", 0);
@@ -101,8 +101,8 @@ Color parseValidColor(std::istream& file) {
 	return res;
 }
 
-Color parseInvalidColor(std::istream& file) {
-	Color res{};
+sf::Color parseInvalidColor(std::istream& file) {
+	sf::Color res{};
 	std::string line{};
 	while (getline(file, line) && line != terminatorChar) {
 		auto space = line.find(" ", 0);

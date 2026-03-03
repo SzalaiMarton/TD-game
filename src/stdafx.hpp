@@ -18,11 +18,11 @@
 #include <queue>
 
 #define DEBUG_TREE 0
+#define DEBUG_KEYS 1
 
 #include "Enums.hpp"
 #include "Stats.hpp"
 #include "Logger.hpp"
-#include "Color.hpp"
 #include "AssetLoader.hpp"
 #include "Attribute.hpp"
 #include "Shapes.hpp"

@@ -1,11 +1,8 @@
 #include "stdafx.hpp"
 
-Target::Target(TargetType type) : BaseShape(0.f, 0.f, 0.f, 0.f, Assets::getTexture(targetTypeToTextureName(type))) {
-	this->stats = createTargetStats(type);
+Target::Target(TargetType type) : BaseShape(0.f, 0.f, 0.f, 0.f, Assets::getTexture(enumToTextureName(type))) {
+	this->stats = Stats::getStatByType(type);
 	this->getSC()->setSize(this->stats->size);
-
-	auto s = this->getSC()->sprite->getLocalBounds().size;
-	this->getSC()->sprite->setOrigin({ s.x / 2, s.y / 2 });
 }
 
 Target::~Target() {
@@ -33,9 +30,9 @@ void Target::onDeath() {
 }
 
 bool Target::die() {
-	auto res = createTargetStats(this->stats->childType);
-	auto texture = Assets::getTexture(targetTypeToTextureName(this->stats->childType));
-	if (res) {
+	auto res = Stats::getStatByType(this->stats->childType);
+	auto texture = Assets::getTexture(enumToTextureName(this->stats->childType));
+	if (res->childType != TargetType::NONE) {
 		this->stats = res;
 		this->getSC()->sprite->setTexture(*texture);
 		return false;
@@ -47,7 +44,7 @@ bool Target::die() {
 }
 
 void Target::takeDmg(uint16_t dmg) {
-	this->stats->health -= dmg;
+	this->stats->health = dmg <= this->stats->health ? this->stats->health - dmg : 0;
 	if (this->stats->health <= 0) {
 		this->die();
 	}
@@ -91,17 +88,6 @@ void Target::spawn(Layer* layer) {
 	layer->addShape(this);
 }
 
-constexpr uint16_t getPriceByGroupType(TargetGroupType type) {
-	switch (type) {
-	case TargetGroupType::BASIC8:
-		return 2;
-	case TargetGroupType::BASIC16:
-		return 4;
-	default:
-		return 0;
-	}
-}
-
 constexpr uint8_t getAmountByType(TargetType type) {
 	switch (type) {
 	case TargetType::BEATEN:
@@ -111,25 +97,7 @@ constexpr uint8_t getAmountByType(TargetType type) {
 	}
 }
 
-TargetGroupStats* getGroupStats(TargetGroupType type) {
-	switch (type) {
-	case TargetGroupType::BASIC8:
-		return new TargetGroupStats(TargetType::BASIC, 8, 100);
-	case TargetGroupType::BASIC16:
-		return new TargetGroupStats(TargetType::BASIC, 16, 100);
-	case TargetGroupType::FAST8:
-		return new TargetGroupStats(TargetType::FAST, 8, 20);
-	case TargetGroupType::FAST16:
-		return new TargetGroupStats(TargetType::FAST, 16, 20);
-	case TargetGroupType::LAYERED8:
-		return new TargetGroupStats(TargetType::LAYERED, 16, 20);
-	case TargetGroupType::LAYERED16:
-		return new TargetGroupStats(TargetType::LAYERED, 16, 20);
-	}
-	return new TargetGroupStats();
-}
-
-TargetGroup::TargetGroup(TargetGroupStats* stats) {
+TargetGroup::TargetGroup(Stats::TargetGroupStats* stats) {
 	this->spawnDelay = stats->spawnDelay;
 	this->targetAmount = stats->targetAmount;
 	this->type = stats->type;

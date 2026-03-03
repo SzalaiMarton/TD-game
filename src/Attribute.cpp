@@ -6,7 +6,7 @@ AttributeBuilder& AttributeBuilder::withTexture(sf::Texture* texture) {
 		this->components[std::type_index(typeid(SpriteComponent))] = new SpriteComponent(texture);
 	}
 	else {
-		ERROR("ObjectBuilder::withTexture", "Texture was nullptr.");
+		ERROR("AttributeBuilder::withTexture", "Texture was nullptr.");
 	}
 	return *this;
 }
@@ -29,6 +29,7 @@ SpriteComponent::SpriteComponent(sf::Texture* texture) {
 	}
 	this->sprite = new sf::Sprite(*texture);
 	this->originalTextureSize = (sf::Vector2f)texture->getSize();
+	this->originalTopLeft = { 0.f, 0.f };
 	this->texture = texture;
 }
 
@@ -57,24 +58,44 @@ void SpriteComponent::setSize(const sf::Vector2f& size) {
 	this->sprite->setScale({ (size.x / this->originalTextureSize.x), (size.y / this->originalTextureSize.y) });
 }
 
-void SpriteComponent::setPos(float x, float y) {
+void SpriteComponent::setPos(float x, float y, bool center) {
+	if (this->originChanged) {
+		this->sprite->setOrigin({ this->sprite->getLocalBounds().size.x / 2, this->sprite->getLocalBounds().size.y / 2 });
+	}
 	if (x < 1) {
 		x = Renderer::getWindow()->getSize().x * x;
 	}
 	if (y < 1) {
 		y = Renderer::getWindow()->getSize().y * y;
 	}
+
 	this->sprite->setPosition({ x, y });
+
+	if (this->originChanged) {
+		this->sprite->setOrigin({ 0, 0 });
+	}
 }
 
-void SpriteComponent::setPos(sf::Vector2f pos) {
+void SpriteComponent::setPos(sf::Vector2f pos, bool center) {
+	if (this->originChanged) {
+		this->sprite->setOrigin({ this->sprite->getLocalBounds().size.x / 2, this->sprite->getLocalBounds().size.y / 2 });
+	}
 	if (pos.x < 1) {
 		pos.x = Renderer::getWindow()->getSize().x * pos.x;
 	}
 	if (pos.y < 1) {
 		pos.y = Renderer::getWindow()->getSize().y * pos.y;
 	}
+
 	this->sprite->setPosition(pos);
+
+	if (this->originChanged) {
+		this->sprite->setOrigin({ 0, 0 });
+	}
+}
+
+void SpriteComponent::setOrigin(float x, float y) {
+	this->
 }
 
 sf::Vector2f SpriteComponent::getPos() const {

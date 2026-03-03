@@ -14,9 +14,8 @@ uint16_t Game::targetSpawnDelay{};
 uint16_t Game::targetSpawnTimeElapsed{};
 uint16_t Game::money{};
 Layer* Game::currentLayer{};
-std::queue<TargetGroupStats*> Game::waitingTargets{};
+std::queue<Stats::TargetGroupStats*> Game::waitingTargets{};
 std::vector<CatType> Game::selectedCats{};
-std::vector<TargetGroupType> Game::availableTargetGroups{};
 std::queue<BaseShape*> Game::toBeDeletedShapes{};
 
 Game::Game() {
@@ -36,9 +35,32 @@ void Game::init() {
 }
 
 void Game::run() {
+#if DEBUG_KEYS == 1
+	bool isPaused = false;
+	bool jump = false;
+#endif
+
 	auto w = Renderer::getWindow();
 	while (w->isOpen()) {
 		while (const std::optional event = w->pollEvent()) {
+
+#if DEBUG_KEYS == 1
+			jump = false;
+			if (event->is<sf::Event::KeyPressed>()) {
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P)) { // PAUSE
+					isPaused = !isPaused;
+				}
+				if (isPaused && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) { // STEP FRAME
+					jump = true;
+					break;
+				}
+			}
+			if (isPaused && !jump) { // SKIP UPDATE
+				continue;
+			}
+#endif
+
+
 			if (event->is<sf::Event::Closed>()) {
 				w->close();
 			}
@@ -63,9 +85,14 @@ void Game::run() {
 			break;
 		}
 
-		#if DEBUG_TREE == 1
+#if DEBUG_TREE == 1
 		Renderer::getCurrentLayer()->root->draw(Renderer::getCurrentLayer());
-		#endif
+#endif
+#if DEBUG_KEYS == 1
+		if (isPaused && !jump) { // SKIP UPDATE
+			continue;
+		}
+#endif
 
 		handleDrag();
 		update();
@@ -219,15 +246,15 @@ void Game::handleInGame() {
 void Game::initMainMenu() {
 	auto layer = Renderer::getLayer(MainLayerName::MAINMENU);
 
-	auto obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, 100.f, 200.f, 100.f, Assets::getTexture("default_texture.png"), "Play")));
+	auto obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, 100.f, 200.f, 100.f, Assets::getTexture(TextureName::defalutTexture), "Play")));
 	obj->addClickHanlder([]() { switchLayer(Game::currentState, GameState::INGAME); });
 	obj->getMIC()->disableDrag();
 
-	obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, 280.f, 200.f, 100.f, Assets::getTexture("default_texture.png"), "Inventory")));
+	obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, 280.f, 200.f, 100.f, Assets::getTexture(TextureName::defalutTexture), "Inventory")));
 	obj->addClickHanlder([]() { switchLayer(Game::currentState, GameState::INVENTORY); });
 	obj->getMIC()->disableDrag();
 
-	obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, (float)Renderer::getWindow()->getSize().y - 120.f, 200.f, 100.f, Assets::getTexture("default_texture.png"), "Exit")));
+	obj = dynamic_cast<Button*>(layer->addShape(new Button(0.5f, (float)Renderer::getWindow()->getSize().y - 120.f, 200.f, 100.f, Assets::getTexture(TextureName::defalutTexture), "Exit")));
 	obj->addClickHanlder([]() { shutdown(); });
 	obj->getMIC()->disableDrag();
 }
@@ -331,7 +358,7 @@ void Game::switchLayer(GameState from, GameState to) {
 }
 
 void Game::queueTargetGroup(TargetGroupType type) {
-	waitingTargets.push(getGroupStats(type));
+	waitingTargets.push(Stats::getStatByType(type));
 }
 
 void Game::initGroup() {
@@ -345,5 +372,11 @@ void Game::initGroup() {
 }
 
 GameConfig::GameConfig() {
-	this->availableCats = { CatType::BLACKGREY, CatType::ORANGE };
+	this->availableCats = { 
+		CatType::BLACKGREY, 
+		CatType::ORANGE 
+	};
+	this->availableTargetGroups = {
+		TargetGroupType::BEATEN_8
+	};
 }

@@ -15,15 +15,6 @@ void Renderer::init(WindowConfig* config = nullptr) {
 	else {
 		throw std::exception();
 	}
-
-	Game::availableTargetGroups = {
-		TargetGroupType::BASIC8, 
-		TargetGroupType::BASIC16, 
-		TargetGroupType::FAST8,
-		TargetGroupType::FAST16,
-		TargetGroupType::LAYERED8,
-		TargetGroupType::LAYERED16
-	};
 }
 
 sf::RenderWindow* Renderer::getWindow() {
@@ -162,11 +153,11 @@ void Layer::removeShape(BaseShape* shape) {
 				this->shapes.erase(it);
 			}
 			else {
-				ERROR("Layer::removeObject", "shape was not found.");
+				ERROR("Layer::removeShape", "shape was not found.");
 			}
 		}
 		else {
-			ERROR("Layer::removeObject", "shape was nullptr.");
+			ERROR("Layer::removeShape", "shape was nullptr.");
 		}
 	}
 	catch (std::exception e) {

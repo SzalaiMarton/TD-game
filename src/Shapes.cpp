@@ -9,11 +9,23 @@ float InGameTargetCard::iconOffset = -15.f;
 float InGameTargetCard::textOffset = 15.f;
 
 BaseShape::BaseShape(float xPos, float yPos, float xSize, float ySize, sf::Texture* texture) {
-	this->initClass(xPos, yPos, xSize, ySize, texture);
+	if (texture) {
+		this->initClass(xPos, yPos, xSize, ySize, texture);
+	}
+	else {
+		ERROR("BaseShape::BaseShape", "Texture was nullptr, setting default texture");
+		this->initClass(xPos, yPos, xSize, ySize, Assets::getTexture("default_texture.png"));
+	}
 }
 
 BaseShape::BaseShape(const sf::Vector2f& pos, const sf::Vector2f& size, sf::Texture* texture) {
-	this->initClass(pos.x, pos.y, size.x, size.y, texture);
+	if (texture) {
+		this->initClass(pos.x, pos.y, size.x, size.y, texture);
+	}
+	else {
+		ERROR("BaseShape::BaseShape", "Texture was nullptr, setting default texture");
+		this->initClass(pos.x, pos.y, size.x, size.y, Assets::getTexture("default_texture.png"));
+	}
 }
 
 BaseShape::~BaseShape() {
@@ -307,10 +319,12 @@ void InvetoryCard::draw(sf::RenderWindow* window) {
 	}
 }
 
-InGameCatCard::InGameCatCard(float xPos, float yPos, float xSize, float ySize, CatType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string((int)Stats::getStatByType(type)->cost)) {
+InGameCatCard::InGameCatCard(float xPos, float yPos, float xSize, float ySize, CatType type) 
+	: Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string((int)Stats::getStatByType(type)->cost)) {
+	
 	this->text->setPosition({ xPos, yPos + InGameCatCard::textOffset });
 	
-	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(catTypeToTextureName(type)));
+	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(enumToTextureName(type)));
 	auto iconBound = this->icon->getSC()->sprite->getLocalBounds().size;
 	this->icon->getSC()->sprite->setOrigin({ iconBound.x / 2, iconBound.y / 2 });
 	this->icon->getSC()->setPos({ xPos, yPos + InGameCatCard::iconOffset });
@@ -339,10 +353,12 @@ InGameCatCard::~InGameCatCard() {
 	draggedCat = nullptr;
 }
 
-InGameTargetCard::InGameTargetCard(float xPos, float yPos, float xSize, float ySize, TargetGroupType type) : Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string(getPriceByGroupType(type))) {
+InGameTargetCard::InGameTargetCard(float xPos, float yPos, float xSize, float ySize, TargetGroupType type) 
+	: Button(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::ingameCard), std::to_string(Stats::getStatByType(type)->cost)) {
+
 	this->text->setPosition({ xPos, yPos + InGameTargetCard::textOffset });
 
-	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(targetTypeToTextureName(type)));
+	this->icon = new Shape(xPos, yPos, xSize / 2 + 15, ySize / 2, Assets::getTexture(enumToTextureName(type)));
 	auto iconBound = this->icon->getSC()->sprite->getLocalBounds().size;
 	this->icon->getSC()->sprite->setOrigin({ iconBound.x / 2, iconBound.y / 2 });
 	this->icon->getSC()->setPos({ xPos, yPos + InGameTargetCard::iconOffset });
@@ -376,7 +392,7 @@ void InGameTargetCard::hoverLossHandler(InGameTargetCard* card) {
 }
 
 void InvetoryCard::initClass(CatType catType) {
-	auto dC = Assets::getTexture(catTypeToTextureName(catType));
+	auto dC = Assets::getTexture(enumToTextureName(catType));
 	this->displayCat = dC ? new sf::Sprite(*dC) : nullptr;
 
 	try {
@@ -474,12 +490,12 @@ void InGameCatCardDesk::draw(sf::RenderWindow* window) {
 
 InGameTargetCardDesk::InGameTargetCardDesk(float xPos, float yPos, float xSize, float ySize, Layer* l)
 	: Shape(xPos, yPos, xSize, ySize, Assets::getTexture("default_texture.png")) {
-	this->cards.reserve(Game::availableTargetGroups.size());
+	this->cards.reserve(Game::config.availableTargetGroups.size());
 	auto startingPos = this->getSC()->getPos();
 	startingPos.x += 50;
 	startingPos.y += 80;
 	int i = 0;
-	for (auto& e : Game::availableTargetGroups) {
+	for (auto& e : Game::config.availableTargetGroups) {
 		this->cards.push_back(dynamic_cast<InGameTargetCard*>(l->addShape(new InGameTargetCard(startingPos.x, startingPos.y + (100 * i), 80, 80, e))));
 		i += 1;
 	}

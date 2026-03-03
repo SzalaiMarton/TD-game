@@ -1,9 +1,7 @@
 #include "stdafx.hpp"
 
-std::unordered_map<std::string, sf::Texture*> Assets::loadedTextures{};
-std::unordered_map<std::string, sf::Font*> Assets::loadedFonts{};
-std::string Assets::texturesPath = "res//textures//";
-std::string Assets::fontsPath = "res//fonts//";
+extern std::unordered_map<std::string, sf::Texture*> Assets::loadedTextures;
+extern std::unordered_map<std::string, sf::Font*> Assets::loadedFonts;
 
 void Assets::loadTextures(const std::filesystem::path& path) {
 	if (std::filesystem::exists(path)) {
@@ -44,19 +42,19 @@ void Assets::loadFonts(const std::filesystem::path& path) {
 	}
 }
 
-sf::Texture* Assets::getTexture(const std::string& name) {
-	auto it = loadedTextures.find(name);
+sf::Texture* Assets::getTexture(std::string_view name) {
+	auto it = loadedTextures.find(std::string(name));
 	return it != loadedTextures.end() ? it->second : nullptr;
 }
 
-sf::Font* Assets::getFont(const std::string& name) {
-	auto it = loadedFonts.find(name);
+sf::Font* Assets::getFont(std::string_view name) {
+	auto it = loadedFonts.find(std::string(name));
 	return it != loadedFonts.end() ? it->second : nullptr;
 }
 
 sf::Image* Assets::getMapMask(MapType type) {
 	auto res = new sf::Image();
-	auto path = texturesPath + mapTypeToMaskName(type);
+	auto path = std::string(texturesPath) + std::string(getMaskTextureName(type));
 	if (res->loadFromFile(path)) {
 		return res;
 	}

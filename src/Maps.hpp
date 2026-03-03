@@ -7,13 +7,13 @@ static std::string mapPathLocation = "res//map_paths//";
 MapConfig parseMapProperties(MapType type);
 std::queue<sf::Vector2f> parsePath(std::istream& file);
 sf::Vector2f parseSize(std::istream& file);
-Color parseValidColor(std::istream& file);
-Color parseInvalidColor(std::istream& file);
+sf::Color parseValidColor(std::istream& file);
+sf::Color parseInvalidColor(std::istream& file);
 static std::string terminatorChar = "-";
 
 struct MapConfig {
-	Color invalidColor{};
-	Color validColor{};
+	sf::Color invalidColor{};
+	sf::Color validColor{};
 	sf::Vector2f mapSize{};
 	std::queue<sf::Vector2f> path{};
 
@@ -21,10 +21,10 @@ struct MapConfig {
 
 	void print() {
 		LOG("size: " << mapSize.x << " " << mapSize.y);
-		LOG("validColor: " << (std::string)validColor);
-		LOG("invalidColor: " << (std::string)invalidColor);
+		//LOG("validColor: " << (std::string)validColor);
+		//LOG("invalidColor: " << (std::string)invalidColor);
 		LOG("path:");
-		auto temp = path;
+		auto& temp = path;
 		while (!temp.empty()) {
 			LOG(temp.front().x << " " << temp.front().y);
 			temp.pop();

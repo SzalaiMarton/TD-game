@@ -2,9 +2,10 @@
 
 BaseBullet::BaseBullet(float xPos, float yPos, float xSize, float ySize, const sf::Vector2f& directionVector, BulletType type, BaseCat* parent)
 	: BaseShape(xPos, yPos, xSize, ySize, Assets::getTexture("default_texture.png")) {
-	auto package = createBullet(type);
-	this->getSC()->sprite->setTexture(*package.first);
-	this->stats = package.second;
+	auto package = Stats::getStatByType(type);
+	this->getSC()->sprite->setTexture(*Assets::getTexture(enumToTextureName(type)));
+	this->getSC()->setSize({ package->size.xSize, package->size.ySize });
+	this->stats = package;
 	this->stats->directionVector = directionVector;
 	this->parent = parent;
 }
@@ -49,9 +50,10 @@ bool BaseBullet::isColliding(Target* target) {
 
 	auto pos = this->getSC()->getPos();
 	auto bound = pos + this->getSC()->sprite->getGlobalBounds().size;
+
 	auto targetPos = target->getSC()->getPos();
 	auto targetBound = targetPos + target->getSC()->sprite->getGlobalBounds().size;
-
+	
 	return !(pos.x > targetBound.x || pos.y > targetBound.y || bound.x < targetPos.x || bound.y < targetPos.y);
 }
 
@@ -61,16 +63,4 @@ void BaseBullet::move() {
 
 void BaseBullet::draw(sf::RenderWindow* window) {
 	window->draw(*this->getSC()->sprite);
-}
-
-std::pair<sf::Texture*, BulletStat*> createBullet(BulletType type) {
-	switch (type) {
-	case BulletType::BASIC:
-		return createBasic();
-	}
-	return createBasic();
-}
-
-std::pair<sf::Texture*, BulletStat*> createBasic() {
-	return {Assets::getTexture("default_texture.png"), new BulletStat(10, 20, 1)};
 }

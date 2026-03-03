@@ -19,5 +19,17 @@ Stats::TargetStats* Stats::getStatByType(TargetType type) {
 }
 
 Stats::TargetGroupStats* Stats::getStatByType(TargetGroupType type) {
-	return nullptr;
+	switch (type) {
+	case TargetGroupType::BEATEN_8:
+		return new Beaten_8();
+	}
+	return new TargetGroupStats();
+}
+
+Stats::BulletStat* Stats::getStatByType(BulletType type) {
+	switch (type) {
+		case BulletType::BASIC:
+			return new BasicBulletStat();
+	}
+	return new BulletStat();
 }

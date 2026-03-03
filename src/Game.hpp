@@ -11,9 +11,10 @@ struct WindowConfig {
 
 struct GameConfig {
 	// default values are the default configs for the game
+	uint8_t validPlacementOffset{10};
 	WindowConfig windowConfig{60, 1100, 700, "TD game"};
 	std::vector<CatType> availableCats{};
-	uint8_t validPlacementOffset{10};
+	std::vector<TargetGroupType> availableTargetGroups{};
 
 	GameConfig();
 
@@ -27,23 +28,22 @@ struct GameConfig {
 class Game {
 public:
 	static bool shuttingdown;
-	static std::queue<TargetGroupStats*> waitingTargets;
-	static std::vector<CatType> selectedCats;
-	static std::vector<TargetGroupType> availableTargetGroups;
-	static std::queue<BaseShape*> toBeDeletedShapes;
-	static TargetGroup* currentGroup;
-	static BaseShape* beingDraggedShape;
-	static BaseShape* clickedShape;
-	static BaseShape* beingHoveredShape;
-	static BaseMap* currentMap;
-	static Layer* currentLayer;
-	static GameConfig config;
-	static GameState currentState;
+	static bool wasHolding;
+	static bool placingEffectPlayed;
 	static uint16_t targetSpawnDelay;
 	static uint16_t targetSpawnTimeElapsed;
 	static uint16_t money;
-	static bool wasHolding;
-	static bool placingEffectPlayed;
+	static GameState currentState;
+	static std::vector<CatType> selectedCats;
+	static std::queue<Stats::TargetGroupStats*> waitingTargets;
+	static std::queue<BaseShape*> toBeDeletedShapes;
+	static BaseShape* beingDraggedShape;
+	static BaseShape* beingHoveredShape;
+	static TargetGroup* currentGroup;
+	static BaseShape* clickedShape;
+	static BaseMap* currentMap;
+	static Layer* currentLayer;
+	static GameConfig config;
 
 	Game();
 
