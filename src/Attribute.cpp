@@ -29,7 +29,6 @@ SpriteComponent::SpriteComponent(sf::Texture* texture) {
 	}
 	this->sprite = new sf::Sprite(*texture);
 	this->originalTextureSize = (sf::Vector2f)texture->getSize();
-	this->originalTopLeft = { 0.f, 0.f };
 	this->texture = texture;
 }
 
@@ -59,9 +58,10 @@ void SpriteComponent::setSize(const sf::Vector2f& size) {
 }
 
 void SpriteComponent::setPos(float x, float y, bool center) {
-	if (this->originChanged) {
-		this->sprite->setOrigin({ this->sprite->getLocalBounds().size.x / 2, this->sprite->getLocalBounds().size.y / 2 });
+	if (center) {
+		this->sprite->setOrigin({this->sprite->getGlobalBounds().size.x / 2, this->sprite->getGlobalBounds().size.y / 2});
 	}
+
 	if (x < 1) {
 		x = Renderer::getWindow()->getSize().x * x;
 	}
@@ -71,15 +71,16 @@ void SpriteComponent::setPos(float x, float y, bool center) {
 
 	this->sprite->setPosition({ x, y });
 
-	if (this->originChanged) {
-		this->sprite->setOrigin({ 0, 0 });
+	if (center) {
+		this->sprite->setOrigin({ 0.f, 0.f });
 	}
 }
 
 void SpriteComponent::setPos(sf::Vector2f pos, bool center) {
-	if (this->originChanged) {
-		this->sprite->setOrigin({ this->sprite->getLocalBounds().size.x / 2, this->sprite->getLocalBounds().size.y / 2 });
+	if (center) {
+		this->sprite->setOrigin({ this->sprite->getGlobalBounds().size.x / 2, this->sprite->getGlobalBounds().size.y / 2 });
 	}
+	
 	if (pos.x < 1) {
 		pos.x = Renderer::getWindow()->getSize().x * pos.x;
 	}
@@ -89,13 +90,14 @@ void SpriteComponent::setPos(sf::Vector2f pos, bool center) {
 
 	this->sprite->setPosition(pos);
 
-	if (this->originChanged) {
-		this->sprite->setOrigin({ 0, 0 });
+	if (center) {
+		this->sprite->setOrigin({ 0.f, 0.f });
 	}
 }
 
-void SpriteComponent::setOrigin(float x, float y) {
-	this->
+bool SpriteComponent::isOriginChanged() const {
+	auto o = this->sprite->getOrigin();
+	return (o.x > 0 && o.y > 0);
 }
 
 sf::Vector2f SpriteComponent::getPos() const {
@@ -154,6 +156,10 @@ void MIC::bindDragLoss(std::function<void()> onDL) {
 	this->handlers.insert({ HandlerType::DRAGLOSSHANDLER, onDL });
 }
 
+void MouseInteractionComponent::bindScrollHandler(std::function<void()> onS) {
+	this->handlers.insert({ HandlerType::SCROLLHANDLER, onS });
+}
+
 void MouseInteractionComponent::enableClick() {
 	this->isClickable = true;
 }
@@ -170,8 +176,16 @@ void MouseInteractionComponent::enableBaseDrag() {
 	this->isBaseDrag = true;
 }
 
+void MouseInteractionComponent::enableScroll() {
+	this->isScrollEnabled = true;
+}
+
 void MouseInteractionComponent::disableBaseDrag() {
 	this->isBaseDrag = false;
+}
+
+void MouseInteractionComponent::disableScroll() {
+	this->isScrollEnabled = false;
 }
 
 void MouseInteractionComponent::disableClick() {
@@ -241,5 +255,14 @@ void MouseInteractionComponent::onDragLoss() const {
 	}
 	else {
 		ERROR("MouseInteractionComponent::onDragLoss", "Handler was nullptr.");
+	}
+}
+
+void MouseInteractionComponent::onScroll() const {
+	if (this->handlers.find(HandlerType::SCROLLHANDLER) != this->handlers.end()) {
+		this->handlers.at(HandlerType::SCROLLHANDLER)();
+	}
+	else {
+		ERROR("MouseInteractionComponent::onScroll", "Handler was nullptr.");
 	}
 }

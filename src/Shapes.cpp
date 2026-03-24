@@ -288,12 +288,12 @@ void QuadTree::draw(Layer* layer) {
 }
 
 InvetoryCard::InvetoryCard(float xPos, float yPos, float xSize, float ySize, CatType catType) 
-	: BaseShape(xPos, yPos, xSize, ySize, Assets::getTexture("inventory_card.png")) {
+	: BaseShape(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::inventoryCard)) {
 	this->initClass(catType);
 }
 
 InvetoryCard::InvetoryCard(const sf::Vector2f& pos, const sf::Vector2f& size, CatType catType)
-	: BaseShape(pos, size, Assets::getTexture("inventory_card.png")) {
+	: BaseShape(pos, size, Assets::getTexture(TextureName::inventoryCard)) {
 	this->initClass(catType);
 }
 
@@ -309,7 +309,7 @@ InvetoryCard::~InvetoryCard() {
 void InvetoryCard::draw(sf::RenderWindow* window) {
 	window->draw(*this->getSC()->sprite);
 	if (this->displayCat) {
-		window->draw(*this->displayCat);
+		this->displayCat->draw(window);
 	}
 	if (this->displayCatDescription) {
 		window->draw(*this->displayCatDescription);
@@ -392,26 +392,25 @@ void InGameTargetCard::hoverLossHandler(InGameTargetCard* card) {
 }
 
 void InvetoryCard::initClass(CatType catType) {
+	auto cardSprite = this->getSC()->sprite;
 	auto dC = Assets::getTexture(enumToTextureName(catType));
-	this->displayCat = dC ? new sf::Sprite(*dC) : nullptr;
+	this->displayCat = new Shape(0, 0, 0, 0, dC);
+	this->displayCat->getSC()->setSize(110.f, 70.f);
+	this->displayCat->getSC()->setPos({ cardSprite->getGlobalBounds().size.x / 2, cardSprite->getGlobalBounds().size.y / 5 });
 
 	try {
-		auto cardSprite = this->getSC()->sprite;
-		
 		InvetoryCard::cardFont = Assets::getFont("ManlineSlabs_t.ttf");
 		this->displayCatName = new sf::Text(*InvetoryCard::cardFont);
 		this->displayCatName->setString(catTypeToString(catType));
 		
 		auto bound = this->displayCatName->getLocalBounds().size;
 		this->displayCatName->setOrigin({ bound.x / 2, bound.y / 2 });
-		this->displayCatName->setPosition({ cardSprite->getLocalBounds().size.x / 3, cardSprite->getLocalBounds().size.y / 4 + 12 });
+		this->displayCatName->setPosition({ cardSprite->getGlobalBounds().size.x / 3, cardSprite->getGlobalBounds().size.y / 4 + 12 });
 		this->displayCatDescription = new sf::Text(*InvetoryCard::cardFont);
 	}
 	catch (std::exception e) {
 		ERROR("InvetoryCard::InvetoryCard", e.what());
 	}
-
-	this->getSC()->sprite->setOrigin({ 0.f, this->getSC()->sprite->getLocalBounds().size.y / 2 });
 }
 
 void InGameTargetCard::draw(sf::RenderWindow* window) {
@@ -512,5 +511,78 @@ void InGameTargetCardDesk::draw(sf::RenderWindow* window) {
 	window->draw(*this->getSC()->sprite);
 	for (auto& e : this->cards) {
 		e->draw(window);
+	}
+}
+
+ShowCase::ShowCase(float xPos, float yPos, float xSize, float ySize, bool xCentered, bool yCentered, bool isVertical, Layer* l) 
+	: Shape(xPos, yPos, xSize, ySize, Assets::getTexture(TextureName::defalutTexture)) {
+	this->isVertical = isVertical;
+	this->parentLayer = l;
+	this->nextPos = { xPos, yPos };
+	if (xCentered) {this->nextPos.x += xSize / 2;}
+	if (yCentered) {this->nextPos.y += ySize / 2;}
+
+	this->mic = new MIC();
+	this->mic->disableClick();
+	this->mic->disableDrag();
+	this->mic->disableHover();
+	this->mic->bindScrollHandler([this]() {
+			this->onScroll();
+		});
+}
+
+void ShowCase::setScrollSpeed(float speed) {
+	this->scrollSpeed = speed;
+}
+
+void ShowCase::setBaseGap(float x, float y) {
+	this->baseGap = { x, y };
+}
+
+void ShowCase::onScroll() {
+	// this will be bound to the mic
+	for (auto& e : this->shapes) {
+		if (this->isVertical) {
+			e.second->getSC()->sprite->move({ this->scrollSpeed, 0.f });
+		}
+		else {
+			e.second->getSC()->sprite->move({ 0.f, this->scrollSpeed });
+		}
+	}
+	if (this->scrollSpeed) {
+		WARNING("ShowCase::onScroll", "Scroll speed is set to 0.");	
+	}
+}
+
+void ShowCase::add(BaseShape* shape) {
+	this->resetPositions();
+	this->placeShape(shape);
+	this->shapes.insert({ shape->getSC()->getPos(), shape });
+	this->parentLayer->addShape(shape);
+}
+
+void ShowCase::resetPositions() {
+	for (auto& e : this->shapes) {
+		e.second->getSC()->setPos(e.first);
+	}
+}
+
+void ShowCase::placeShape(BaseShape* shape) {
+	shape->getSC()->setPos(this->nextPos);
+	if (this->isVertical) {
+		this->nextPos.y += shape->getSC()->sprite->getGlobalBounds().size.y + this->baseGap.y;
+	}
+	else {
+		this->nextPos.x += shape->getSC()->sprite->getGlobalBounds().size.x + this->baseGap.x;
+	}
+
+	if (this->baseGap.x == 0.f && this->baseGap.y == 0.f) {
+		WARNING("ShowCase::placeShape", "Base gap is (0, 0), shapes will be placed next to each other without any gap");
+	}
+}
+
+void ShowCase::draw(sf::RenderWindow* window) {
+	for (auto& e : this->shapes) {
+		e.second->draw(window);
 	}
 }

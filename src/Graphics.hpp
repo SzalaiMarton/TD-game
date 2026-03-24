@@ -7,8 +7,8 @@ enum class MainLayerName;
 
 class Layer {
 public:
-	std::vector<BaseShape*> shapes{};
 	bool isHidden{true};
+	std::vector<BaseShape*> shapes{};
 	QuadTree* root;
 
 	Layer(float xPos, float yPos, float xSize, float ySize);

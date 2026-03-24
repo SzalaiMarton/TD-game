@@ -21,9 +21,11 @@ struct MouseInteractionComponent : public ObjectComponent {
 	bool isHoverable{true};
 	bool isDraggable{true};
 	bool isBaseDrag{false};
+	bool isScrollEnabled{false};
 
 	std::unordered_map<HandlerType, std::function<void()>> handlers;
 
+	MouseInteractionComponent() = default;
 	MouseInteractionComponent(std::initializer_list<SingleHandler> handlers);
 	MouseInteractionComponent(const MouseInteractionComponent& original);
 	MouseInteractionComponent* copy() const override;
@@ -34,30 +36,33 @@ struct MouseInteractionComponent : public ObjectComponent {
 	void bindDragHandler(std::function<void()> onD);
 	void bindHoverLossHandler(std::function<void()> onLF);
 	void bindDragLoss(std::function<void()> onDL);
+	void bindScrollHandler(std::function<void()> onS);
 
 	void enableClick();
 	void enableDrag();
 	void enableHover();
 	void enableBaseDrag();
+	void enableScroll();
 
 	void disableClick();
 	void disableDrag();
 	void disableHover();
 	void disableBaseDrag();
+	void disableScroll();
 
 	bool isHovered(sf::Vector2i& pMouse, sf::FloatRect& bounds) const;
+	
 	void onHover() const;
-	void onClick() const;
 	void onHoverLoss() const;
+	void onClick() const;
 	void onClickLoss() const;
 	void onDrag(const sf::Vector2i& pMouse, BaseShape* shape) const;
 	void onDragLoss() const;
+	void onScroll() const;
 };
 using MIC = MouseInteractionComponent;
 
 struct SpriteComponent : public ObjectComponent {
-	bool originChanged{ false };
-	sf::Vector2f originalOrigin{};
 	sf::Vector2f originalTextureSize{};
 	sf::Texture* texture{};
 	sf::Sprite* sprite{};
@@ -71,11 +76,9 @@ struct SpriteComponent : public ObjectComponent {
 	void setSize(const sf::Vector2f& size);
 	void setPos(float x, float y, bool center = false);
 	void setPos(sf::Vector2f pos, bool center = false);
-	void setOrigin(float x, float y);
-	void setOrigin(sf::Vector2f pos);
+	bool isOriginChanged() const;
 	sf::Vector2f getPos() const;
 };
-
 
 
 

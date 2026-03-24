@@ -8,6 +8,8 @@ BaseBullet::BaseBullet(float xPos, float yPos, float xSize, float ySize, const s
 	this->stats = package;
 	this->stats->directionVector = directionVector;
 	this->parent = parent;
+
+	this->getSC()->sprite->setRotation(sf::degrees(atan2(directionVector.y, directionVector.x) * (180 / pi) - 90.f));
 }
 
 BaseBullet::~BaseBullet() {
@@ -48,13 +50,14 @@ bool BaseBullet::isColliding(Target* target) {
 		return false;
 	}
 
-	auto pos = this->getSC()->getPos();
+	/*auto pos = this->getSC()->getPos() - this->getSC()->sprite->getOrigin();
 	auto bound = pos + this->getSC()->sprite->getGlobalBounds().size;
 
-	auto targetPos = target->getSC()->getPos();
+	auto targetPos = target->getSC()->getPos() - target->getSC()->sprite->getOrigin();
 	auto targetBound = targetPos + target->getSC()->sprite->getGlobalBounds().size;
 	
-	return !(pos.x > targetBound.x || pos.y > targetBound.y || bound.x < targetPos.x || bound.y < targetPos.y);
+	return !(pos.x > targetBound.x || pos.y > targetBound.y || bound.x < targetPos.x || bound.y < targetPos.y);*/
+	return this->getSC()->sprite->getGlobalBounds().findIntersection(target->getSC()->sprite->getGlobalBounds()).has_value();
 }
 
 void BaseBullet::move() {

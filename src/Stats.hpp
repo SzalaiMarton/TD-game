@@ -105,11 +105,11 @@ namespace Stats {
 
 	struct BasicBulletStat : public BulletStat {
 		BasicBulletStat() {
-			this->speed = 1;
+			this->speed = 5;
 			this->penetration = 1;
 			this->dmg = 10;
 			this->directionVector = {0, 0};
-			this->size = {3, 15};
+			this->size = {5, 20};
 		}
 	};
 

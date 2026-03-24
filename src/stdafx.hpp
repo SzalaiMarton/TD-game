@@ -18,8 +18,9 @@
 #include <queue>
 
 #define DEBUG_TREE 0
-#define DEBUG_KEYS 1
+#define DEBUG_KEYS 0
 
+#include "Vector.hpp"
 #include "Enums.hpp"
 #include "Stats.hpp"
 #include "Logger.hpp"
@@ -32,5 +33,3 @@
 #include "Graphics.hpp"
 #include "Targets.hpp"
 #include "Game.hpp"
-
-// onUpdate returns true if something died, returns false if not

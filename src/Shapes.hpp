@@ -8,8 +8,8 @@ class BaseCat;
 extern void createCat(BaseCat*& bindTo, CatType type, float xPos, float yPos);
 
 struct BaseShape {
-	Attribute* attributes{};
 	bool isHidden{false};
+	Attribute* attributes{};
 	std::set<QuadTree*> treeNodes{};
 	Layer* parentLayer{};
 	//debug
@@ -59,7 +59,7 @@ struct Button : public BaseShape {
 
 struct InvetoryCard : public BaseShape {
 	static sf::Font* cardFont;
-	sf::Sprite* displayCat{};
+	Shape* displayCat{};
 	sf::Text* displayCatName{};
 	sf::Text* displayCatDescription{};
 
@@ -71,6 +71,7 @@ struct InvetoryCard : public BaseShape {
 
 	void draw(sf::RenderWindow* window) override;
 	void initClass(CatType catType);
+	void move(const sf::Vector2f& offset);
 };
 
 struct Square : public BaseShape {
@@ -134,17 +135,38 @@ struct InGameTargetCardDesk : public Shape {
 	void draw(sf::RenderWindow* window) override;
 };
 
+struct ShowCase : public Shape {
+	bool isVertical{};
+	sf::Vector2f nextPos{};
+	sf::Vector2f baseGap{10,10};
+	float scrollSpeed{};
+	Layer* parentLayer{};
+	MIC* mic{};
+	std::unordered_map<fVector2, BaseShape*> shapes{}; // original position : shape
+
+	ShowCase(float xPos, float yPos, float xSize, float ySize, bool xCentered, bool yCentered, bool isVertical, Layer* l);
+	~ShowCase() {}
+
+	void setScrollSpeed(float speed);
+	void setBaseGap(float x, float y);
+
+	void onScroll();
+	void add(BaseShape* shape);
+	void resetPositions();
+	void placeShape(BaseShape* shape);
+	void draw(sf::RenderWindow* window);
+};
+
 struct QuadTree {
-	static unsigned smallestSize;
-	
+	bool hasBeenSplit = false;
 	float xPos, yPos;
+	static unsigned smallestSize;
 	unsigned xSize, ySize;
 	std::set<BaseShape*> elements{};
 	QuadTree* ne{};
 	QuadTree* nw{};
 	QuadTree* se{};
 	QuadTree* sw{};
-	bool hasBeenSplit = false;
 	//debug
 	Square* s{};
 	std::string name{};

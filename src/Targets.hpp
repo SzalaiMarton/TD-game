@@ -6,8 +6,8 @@ struct Stats::TargetGroupStats;
 class Target : public BaseShape {
 public:
 	bool isSpawned{false};
-	std::queue<sf::Vector2f> path{};
 	Stats::TargetStats* stats{};
+	std::queue<sf::Vector2f> path{};
 
 	Target(TargetType type);
 	~Target();
@@ -21,7 +21,7 @@ public:
 	void takeDmg(uint16_t dmg);
 	void retrievePath();
 	void move();
-	void spawn(Layer* layer);
+	void spawn();
 };
 
 class TargetGroup {
@@ -33,7 +33,7 @@ public:
 
 	TargetGroup(Stats::TargetGroupStats* stats);
 
-	void spawnNext(Layer* layer);
+	void spawnNext();
 	std::pair<uint8_t, TargetGroup*> initSpawn();
 };
 

@@ -215,7 +215,7 @@ void Game::handleInGame() {
 
 	if (Game::targetSpawnTimeElapsed >= Game::targetSpawnDelay) {
 		if (Game::currentGroup && Game::currentGroup->targets.size() > 0) {
-			Game::currentGroup->spawnNext(Game::currentLayer);
+			Game::currentGroup->spawnNext();
 			Game::targetSpawnTimeElapsed = 0;
 		}
 		else {
@@ -284,18 +284,13 @@ void Game::initLayers() {
 }
 
 void Game::initInventory() {
-	int idx = 0;
-	float startingX = 30;
-	float startingY = (float)Renderer::getWindow()->getSize().y / 2;
-	float gap = 450;
 	auto layer = Renderer::getLayer(MainLayerName::INVENTORY);
 
-	for (auto& e : config.availableCats) {
-		layer->addShape(new InvetoryCard(startingX + (gap * idx), startingY, 300.f, (float)Renderer::getWindow()->getSize().y - 200.f, e));
-		idx++;
-	}
+	auto showcase = dynamic_cast<ShowCase*>(layer->addShape(new ShowCase(0, 0, 1100, 700, false, false, false, layer)));
+	showcase->add(new InvetoryCard(0, 0, 200, 400, CatType::BLACKGREY));
+	showcase->add(new InvetoryCard(0, 0, 200, 400, CatType::ORANGE));
 
-	auto backButton = dynamic_cast<Button*>(layer->addShape(new Button(100, 500, 200, 100, Assets::getTexture("default_texture.png"), "Back")));
+	auto backButton = dynamic_cast<Button*>(layer->addShape(new Button(100, 500, 200, 100, Assets::getTexture(TextureName::defalutTexture), "Back")));
 	backButton->addClickHanlder([]() {switchLayer(Game::currentState, GameState::MAINMENU); });
 	backButton->getMIC()->disableDrag();
 }
@@ -309,7 +304,7 @@ void Game::initInGame() {
 	layer->addShape(new InGameCatCardDesk(0, 600, 1100, 100, layer), true);
 	layer->addShape(new InGameTargetCardDesk(1000, 0, 100, 800, layer), true);
 
-	auto backButton = dynamic_cast<Button*>(layer->addShape(new Button(100, 500, 200, 100, Assets::getTexture("default_texture.png"), "Back")));
+	auto backButton = dynamic_cast<Button*>(layer->addShape(new Button(100, 500, 200, 100, Assets::getTexture(TextureName::defalutTexture), "Back")));
 	backButton->addClickHanlder([]() {switchLayer(Game::currentState, GameState::MAINMENU); });
 	backButton->getMIC()->disableDrag();
 }
@@ -365,7 +360,7 @@ void Game::initGroup() {
 	if (waitingTargets.size() > 0) {
 		auto tg = new TargetGroup(waitingTargets.front());
 		auto res = tg->initSpawn();
-		Game::targetSpawnDelay = res.first * 5;
+		Game::targetSpawnDelay = res.first;
 		Game::currentGroup = res.second;
 		waitingTargets.pop();
 	}

@@ -179,6 +179,7 @@
     <ClInclude Include="src\Stats.hpp" />
     <ClInclude Include="src\stdafx.hpp" />
     <ClInclude Include="src\Targets.hpp" />
+    <ClInclude Include="src\Vector.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\map_paths\place_holder_map.txt" />

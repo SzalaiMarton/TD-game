@@ -3,9 +3,12 @@
 Target::Target(TargetType type) : BaseShape(0.f, 0.f, 0.f, 0.f, Assets::getTexture(enumToTextureName(type))) {
 	this->stats = Stats::getStatByType(type);
 	this->getSC()->setSize(this->stats->size);
+	this->getSC()->sprite->setOrigin({ this->getSC()->sprite->getGlobalBounds().size.x / 2, this->getSC()->sprite->getGlobalBounds().size.y / 2 });
 }
 
 Target::~Target() {
+	Renderer::getLayer(MainLayerName::INGAME)->removeShape(this);
+	this->detachFromEveryTree(); 
 	delete this->stats;
 }
 
@@ -24,8 +27,6 @@ void Target::onUpdate() {
 }
 
 void Target::onDeath() {
-	Renderer::getLayer(MainLayerName::INGAME)->removeShape(this);
-	this->detachFromEveryTree();
 	Game::toBeDeletedShapes.push(this);
 }
 
@@ -81,11 +82,11 @@ void Target::move() {
 	}
 }
 
-void Target::spawn(Layer* layer) {
+void Target::spawn() {
 	this->isSpawned = true;
 	this->retrievePath();
 	this->getSC()->sprite->setPosition({ this->path.front().x, this->path.front().y});
-	layer->addShape(this);
+	Game::currentLayer->addShape(this);
 }
 
 constexpr uint8_t getAmountByType(TargetType type) {
@@ -107,12 +108,12 @@ TargetGroup::TargetGroup(Stats::TargetGroupStats* stats) {
 	}
 }
 
-void TargetGroup::spawnNext(Layer* layer) {
-	this->targets.back()->spawn(layer);
+void TargetGroup::spawnNext() {
+	this->targets.back()->spawn();
 	this->targets.pop_back();
 }
 
 std::pair<uint8_t, TargetGroup*> TargetGroup::initSpawn() {
 	// returns the wait time and current group
-	return { 10, this };
+	return { this->spawnDelay, this};
 }
